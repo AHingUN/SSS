@@ -48,7 +48,7 @@
     const scheduledRender = debounce(renderSites, 80);
     let activeCategory = "all";
     let currentVisible = [];
-    const SITE_PASSWORD = "lumen2026";
+    const SITE_PASSWORD = "2026";
     const SITE_UNLOCK_KEY = "lumen.sitesUnlocked";
     const MAX_ATTEMPTS = 5;
     const LOCKOUT_MS = 30000;
