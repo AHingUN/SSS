@@ -1,0 +1,498 @@
+/* Collapsible tools and full-screen author page */
+/* ==========================================================================
+   Collapsible tool collection
+   ========================================================================== */
+.tool-grid-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.tool-grid-toggle {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 10px 24px -22px rgba(var(--shadow-rgb), 0.4);
+  transition:
+    border-color 0.22s ease,
+    background-color 0.22s ease,
+    color 0.22s ease,
+    transform 0.22s var(--ease-spring);
+}
+
+.tool-grid-toggle:hover {
+  border-color: var(--field-border-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.tool-grid-toggle-label {
+  font-size: 10.5px;
+  font-weight: 560;
+}
+
+.tool-grid-toggle-meta {
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+}
+
+.tool-grid-toggle .icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.26s var(--ease-spring);
+}
+
+.tool-grid-toggle.is-expanded .icon {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 520px) {
+  .tool-grid-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   Full-screen author page
+   ========================================================================== */
+.author-dialog {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.author-dialog::backdrop {
+  background: rgba(17, 15, 24, 0.4);
+  animation: backdropIn 0.28s ease both;
+}
+
+.author-dialog.is-closing::backdrop {
+  animation: backdropOut 0.24s ease-in both;
+}
+
+.author-screen {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(75% 60% at 84% 8%, rgba(169, 143, 255, 0.2), transparent 64%),
+    radial-gradient(55% 48% at 4% 72%, rgba(255, 174, 145, 0.13), transparent 72%),
+    var(--bg);
+  animation: authorScreenIn 0.5s var(--ease-spring) both;
+}
+
+[data-theme="dark"] .author-screen {
+  background:
+    radial-gradient(75% 60% at 84% 8%, rgba(101, 78, 167, 0.3), transparent 64%),
+    radial-gradient(55% 48% at 4% 72%, rgba(127, 65, 69, 0.14), transparent 72%),
+    var(--bg);
+}
+
+.author-dialog.is-closing .author-screen {
+  animation: authorScreenOut 0.23s ease-in both;
+}
+
+@keyframes authorScreenIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes authorScreenOut {
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.996);
+  }
+}
+
+.author-floating-close {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 5;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--field-border);
+  border-radius: 50%;
+  background: var(--glass-bg-strong);
+  color: var(--text-secondary);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 16px 34px -22px rgba(var(--shadow-rgb), 0.55);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s var(--ease-spring);
+}
+
+.author-floating-close:hover {
+  border-color: var(--field-border-strong);
+  background: var(--surface-strong);
+  color: var(--text);
+  transform: scale(1.04);
+}
+
+.author-floating-close .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.author-scroll {
+  width: min(1180px, calc(100% - 56px));
+  margin: 0 auto;
+  padding-bottom: 50px;
+}
+
+.author-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(290px, 0.72fr);
+  align-items: center;
+  gap: clamp(32px, 7vw, 96px);
+  padding: clamp(46px, 8vh, 100px) 0 clamp(44px, 7vh, 86px);
+}
+
+.author-hero-copy {
+  min-width: 0;
+}
+
+.author-hero-copy h1 {
+  margin: 9px 0 24px;
+  color: var(--text);
+  font-size: clamp(44px, 6.2vw, 88px);
+  font-weight: 690;
+  letter-spacing: -0.06em;
+  line-height: 1.02;
+}
+
+.author-hero-copy h1 em {
+  color: transparent;
+  font-style: normal;
+  background: linear-gradient(100deg, #7d6cf6, #b07ce1 48%, #e98f85);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.author-lead {
+  max-width: 610px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.author-lead + .author-lead {
+  margin-top: 10px;
+}
+
+.author-lead.secondary {
+  color: var(--text-tertiary);
+}
+
+.author-hero .author-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.author-hero .author-tags span {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+}
+
+.author-portrait-panel {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 0.78;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 38px;
+  background:
+    radial-gradient(80% 60% at 70% 20%, rgba(255, 228, 191, 0.52), transparent 70%),
+    linear-gradient(145deg, #8d80f0, #b88fe5 52%, #e69b8c);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 44px 80px -48px rgba(89, 60, 139, 0.6);
+  transform: rotate(2deg);
+}
+
+.author-portrait-panel::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.2), transparent 48%);
+  content: "";
+  pointer-events: none;
+}
+
+.author-portrait-ring {
+  position: absolute;
+  width: 73%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+}
+
+.author-portrait-ring.is-inner {
+  width: 55%;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.author-monogram {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: clamp(120px, 15vw, 210px);
+  font-weight: 680;
+  letter-spacing: -0.1em;
+  text-indent: -0.08em;
+  text-shadow: 0 16px 30px rgba(70, 39, 91, 0.22);
+}
+
+.author-portrait-caption {
+  position: absolute;
+  right: 0;
+  bottom: 23px;
+  left: 0;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.64);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.author-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.author-principles article {
+  min-width: 0;
+  padding: 27px 26px 30px;
+}
+
+.author-principles article + article {
+  border-left: 1px solid var(--line);
+}
+
+.author-index {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+}
+
+.author-principles h2 {
+  margin: 13px 0 10px;
+  color: var(--text);
+  font-size: 23px;
+  font-weight: 640;
+  letter-spacing: -0.04em;
+}
+
+.author-principles p {
+  max-width: 290px;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  line-height: 1.75;
+}
+
+.author-note {
+  display: block;
+  padding: clamp(44px, 8vh, 78px) 0;
+}
+
+.author-note blockquote {
+  max-width: 880px;
+  color: var(--text);
+  font-size: clamp(28px, 4.2vw, 50px);
+  font-weight: 580;
+  letter-spacing: -0.055em;
+  line-height: 1.32;
+}
+
+.author-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 19px 2px 0;
+  border-top: 1px solid var(--line);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+}
+
+.author-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.author-actions .text-link {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  letter-spacing: 0;
+}
+
+.author-actions .btn {
+  height: 38px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.about-author-link {
+  margin-left: auto;
+}
+
+@media (max-width: 980px) {
+  .author-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 34px;
+  }
+
+  .author-portrait-panel {
+    width: min(100%, 360px);
+    aspect-ratio: 1.3;
+    justify-self: start;
+  }
+
+  .author-monogram {
+    font-size: 150px;
+  }
+
+  .author-note {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .author-numbers {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .author-floating-close {
+    top: 14px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .author-scroll {
+    width: calc(100% - 32px);
+    padding-bottom: 32px;
+  }
+
+  .author-hero {
+    padding-top: 38px;
+    padding-bottom: 42px;
+    gap: 30px;
+  }
+
+  .author-hero-copy h1 {
+    margin-bottom: 18px;
+    font-size: clamp(42px, 10.5vw, 58px);
+  }
+
+  .author-lead {
+    font-size: 11.5px;
+    line-height: 1.8;
+  }
+
+  .author-portrait-panel {
+    width: min(100%, 310px);
+    aspect-ratio: 1.22;
+    border-radius: 27px;
+  }
+
+  .author-monogram {
+    font-size: 125px;
+  }
+
+  .author-principles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .author-principles article {
+    padding: 21px 4px 23px;
+  }
+
+  .author-principles article + article {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .author-principles p {
+    max-width: 100%;
+  }
+
+  .author-note {
+    padding: 36px 0;
+  }
+
+  .author-note blockquote {
+    font-size: 31px;
+  }
+
+  .author-numbers strong {
+    font-size: 26px;
+  }
+
+  .author-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .author-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .about-author-link {
+    margin-left: 0;
+  }
+}
+

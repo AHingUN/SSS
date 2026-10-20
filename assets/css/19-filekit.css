@@ -1,0 +1,470 @@
+/* ==========================================================================
+   File workshop: local hash, Base64 and file restore
+   ChengYu · Lumen Toolkit
+   ========================================================================== */
+
+.filekit-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.filekit-grid {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.78fr) minmax(0, 1.22fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.filekit-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 16px 44px -32px rgba(28, 22, 52, 0.3);
+}
+
+.filekit-work {
+  display: flex;
+  flex-direction: column;
+}
+
+.filekit-drop {
+  display: flex;
+  min-height: 264px;
+  padding: 24px 18px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1.5px dashed var(--field-border-strong);
+  border-radius: 16px;
+  background:
+    radial-gradient(80% 90% at 50% 0%, rgba(10, 132, 255, 0.07), transparent 70%),
+    var(--field-bg);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.filekit-drop:hover,
+.filekit-drop.is-dragging {
+  border-color: var(--accent);
+  background-color: var(--field-bg-focus);
+}
+
+.filekit-drop.is-dragging {
+  transform: scale(0.995);
+}
+
+.filekit-drop-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  margin-bottom: 4px;
+  border: 1px solid var(--field-border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--accent);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.filekit-drop-icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.filekit-drop strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 580;
+  letter-spacing: -0.015em;
+}
+
+.filekit-drop > span:not(.filekit-drop-icon) {
+  max-width: 210px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.filekit-drop .btn {
+  margin-top: 4px;
+}
+
+.filekit-file {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--field-bg);
+}
+
+.filekit-file-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.filekit-file-icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.filekit-file-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 3px;
+}
+
+.filekit-file-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 570;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filekit-file-copy span {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.filekit-file-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.filekit-file-actions .chrome-action {
+  min-height: 28px;
+  padding-inline: 6px;
+  font-size: 10.5px;
+}
+
+.filekit-preview {
+  max-height: 150px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--field-bg);
+}
+
+.filekit-preview img {
+  display: block;
+  width: 100%;
+  max-height: 150px;
+  object-fit: contain;
+}
+
+.filekit-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 11px 1px 0;
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.filekit-note .icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.filekit-facts {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.filekit-facts div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.filekit-facts span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.filekit-facts b {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.filekit-work-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.filekit-work-hint {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.filekit-modes {
+  margin-top: 10px;
+}
+
+.filekit-modes button {
+  min-height: 34px;
+}
+
+.filekit-pane {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 13px;
+}
+
+.filekit-hashes {
+  display: grid;
+  gap: 7px;
+}
+
+.filekit-hash-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid var(--field-border);
+  border-radius: 11px;
+  background: var(--field-bg);
+}
+
+.filekit-hash-label {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.filekit-hash-value {
+  min-width: 0;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.filekit-hash-value.has-value {
+  color: var(--text-secondary);
+}
+
+.filekit-hash-copy {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.filekit-hash-copy:hover {
+  border-color: var(--field-border);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.filekit-hash-copy:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.filekit-hash-copy .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.filekit-textarea {
+  width: 100%;
+  min-height: 184px;
+  padding: 11px 12px;
+  resize: vertical;
+  border: 1px solid var(--field-border);
+  border-radius: 13px;
+  outline: none;
+  background: var(--field-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.filekit-textarea:focus {
+  border-color: var(--accent);
+  background: var(--field-bg-focus);
+}
+
+.filekit-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+#filekitBase64 {
+  flex: 1 1 auto;
+  min-height: 220px;
+}
+
+.filekit-actions {
+  display: flex;
+  min-height: 30px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filekit-hint {
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.filekit-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filekit-decode-info {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.filekit-decode-info:empty {
+  display: none;
+}
+
+.filekit-panel .inline-error {
+  margin: 0;
+}
+
+.filekit-panel .tool-tip {
+  margin-top: 0;
+}
+
+#filekitStatus[data-state="busy"] {
+  color: var(--accent);
+}
+
+#filekitStatus[data-state="error"] {
+  color: #d74444;
+}
+
+@media (max-width: 980px) {
+  .filekit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filekit-drop {
+    min-height: 190px;
+  }
+}
+
+@media (max-width: 560px) {
+  .filekit-card {
+    padding: 12px;
+    border-radius: 17px;
+  }
+
+  .filekit-drop {
+    min-height: 170px;
+    padding: 19px 13px;
+  }
+
+  .filekit-file-actions .chrome-action span {
+    display: none;
+  }
+
+  .filekit-file-actions .chrome-action {
+    width: 28px;
+    padding-inline: 0;
+    justify-content: center;
+  }
+
+  .filekit-hash-row {
+    grid-template-columns: 62px minmax(0, 1fr) 26px;
+    gap: 6px;
+    padding: 7px 8px;
+  }
+
+  .filekit-hash-label,
+  .filekit-hash-value {
+    font-size: 10px;
+  }
+
+  .filekit-textarea {
+    min-height: 160px;
+    padding: 10px;
+  }
+
+  #filekitBase64 {
+    min-height: 190px;
+  }
+
+  .filekit-actions {
+    align-items: flex-start;
+  }
+
+  .filekit-hint {
+    width: 100%;
+  }
+}

@@ -1,0 +1,2720 @@
+<!DOCTYPE html>
+<!--
+  程宇 · Lumen Toolkit
+  ====================
+  单文件页面入口：这里集中放页面骨架、SVG sprite、4 个 dialog、
+  30 个工具 <template> 和脚本引用。所有工具都通过 Hash 路由
+  (#/tool/<id>) 复用同一个 #toolRoot，不重新加载页面。
+  直接 file:// 打开即可，不需要服务器。
+-->
+<html lang="zh-CN" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="lumen-build" content="20261020-3">
+  <title>程宇 · 日常工具，一气呵成</title>
+  <meta name="description" content="程宇 · Lumen Toolkit 是一套精致、快速、完全在本地运行的日常工具集。JSON、二维码、取色、密码、换算、链接处理、CSV、文本对比、JWT、图片色板、Cron、网页沙盒、媒体录制、数据压缩、文件校验与 Base64、Favicon、生活计算与图片裁剪等三十款工具，打开即用。">
+  <meta name="theme-color" content="#f3f0ea">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="程宇">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preload" href="assets/author-avatar.jpg" as="image" type="image/jpeg">
+
+  <!--
+    CSS 按“基础 → 页面 → 工具 → 覆盖层 → 最新视觉层”的顺序加载。
+    后面的文件可以覆盖前面的文件；21/22/23 是最终视觉层。
+    不要在中间插入新层，否则响应式和深色主题可能被旧规则反向覆盖。
+  -->
+  <link rel="stylesheet" href="assets/css/01-foundation.css">
+  <link rel="stylesheet" href="assets/css/02-shell.css">
+  <link rel="stylesheet" href="assets/css/03-home.css">
+  <link rel="stylesheet" href="assets/css/04-tool-shell.css">
+  <link rel="stylesheet" href="assets/css/05-tools-core.css">
+  <link rel="stylesheet" href="assets/css/06-dialogs.css">
+  <link rel="stylesheet" href="assets/css/07-responsive.css">
+  <link rel="stylesheet" href="assets/css/08-url-sites.css">
+  <link rel="stylesheet" href="assets/css/09-tools-extra.css">
+  <link rel="stylesheet" href="assets/css/10-friends-sites.css">
+  <link rel="stylesheet" href="assets/css/11-search-author.css">
+  <link rel="stylesheet" href="assets/css/12-clock.css">
+  <link rel="stylesheet" href="assets/css/13-author.css">
+  <link rel="stylesheet" href="assets/css/14-overrides.css">
+  <link rel="stylesheet" href="assets/css/15-studios.css">
+  <link rel="stylesheet" href="assets/css/16-random.css">
+  <link rel="stylesheet" href="assets/css/17-liquid-glass.css">
+  <link rel="stylesheet" href="assets/css/18-refinements.css">
+  <link rel="stylesheet" href="assets/css/19-filekit.css">
+  <link rel="stylesheet" href="assets/css/20-powerups.css">
+  <link rel="stylesheet" href="assets/css/21-global-glass.css">
+  <link rel="stylesheet" href="assets/css/22-document-editor.css">
+  <link rel="stylesheet" href="assets/css/23-unit-calculator.css">
+  <!--
+    在 CSS 绘制前同步决定主题，避免深色偏好用户看到一闪而过的浅色页面。
+    这里只读取 localStorage 和系统偏好；真正的主题切换由 05-ui.js 处理。
+  -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.remove('no-js');
+      root.classList.add('js');
+      try {
+        var saved = localStorage.getItem('lumen.theme');
+        var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.dataset.theme = saved === 'dark' || saved === 'light' ? saved : (dark ? 'dark' : 'light');
+      } catch (e) {
+        root.dataset.theme = 'light';
+      }
+      root.style.colorScheme = root.dataset.theme;
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <!-- 背景层：底色、四枚环境光斑和一层低透明度噪点，全部是装饰。 -->
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-base"></div>
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+    <span class="orb orb-d"></span>
+    <span class="ambient-grain"></span>
+  </div>
+
+  <!--
+    SVG sprite：页面用到的所有图标都内联在这里，通过 <use href="#i-name">
+    引用，不发起额外图标请求。新增图标时在这里加 <symbol>，并保持 id 唯一。
+  -->
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-mark" viewBox="0 0 24 24">
+      <path d="M12 2.7c2.36 3.13 6.2 6.91 6.2 10.62a6.2 6.2 0 1 1-12.4 0C5.8 9.61 9.64 5.83 12 2.7Z"/>
+      <path d="M9.35 13.25c.15 1.64 1.22 2.75 2.82 3.06" opacity=".55"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2"/>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="m12 3.25 2.68 5.43 5.99.87-4.33 4.22 1.02 5.96L12 16.92l-5.36 2.81 1.02-5.96-4.33-4.22 5.99-.87L12 3.25Z"/>
+    </symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24">
+      <path d="M20.4 14.55A8.6 8.6 0 0 1 9.45 3.6a8.65 8.65 0 1 0 10.95 10.95Z"/>
+    </symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2.25v2.2M12 19.55v2.2M4.35 4.35l1.56 1.56M18.09 18.09l1.56 1.56M2.25 12h2.2M19.55 12h2.2M4.35 19.65l1.56-1.56M18.09 5.91l1.56-1.56"/>
+    </symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24">
+      <path d="M7 17 17.1 6.9M8.1 6.9h9v9"/>
+    </symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24">
+      <path d="M19 12H5M11 6l-6 6 6 6"/>
+    </symbol>
+    <symbol id="i-arrow-swap" viewBox="0 0 24 24">
+      <path d="M4 8h14.2M15 4.5 18.5 8 15 11.5M20 16H5.8M9 12.5 5.5 16 9 19.5"/>
+    </symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24">
+      <rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/>
+      <path d="M15.5 5.7V5A1.8 1.8 0 0 0 13.7 3.2H5A1.8 1.8 0 0 0 3.2 5v8.7A1.8 1.8 0 0 0 5 15.5h.7"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m4.5 12.2 4.8 4.8L19.8 6.5"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path d="M20.2 10.6A8.3 8.3 0 1 0 18.6 17M20.2 4.5v6.1H14"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+      <path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4.5 20.2h15"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 21V9M7.5 13.5 12 9l4.5 4.5M4.5 3.8h15"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="m6 6 12 12M18 6 6 18"/>
+    </symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24">
+      <path d="m6 9 6 6 6-6"/>
+    </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="4.7" y="10" width="14.6" height="10.4" rx="3"/>
+      <path d="M8.2 10V7.2a3.8 3.8 0 1 1 7.6 0V10M12 14.4v2"/>
+    </symbol>
+    <symbol id="i-braces" viewBox="0 0 24 24">
+      <path d="M9 3.8H7.4A2.4 2.4 0 0 0 5 6.2v2.7a2.3 2.3 0 0 1-2.3 2.3v1.6A2.3 2.3 0 0 1 5 15.1v2.7a2.4 2.4 0 0 0 2.4 2.4H9M15 3.8h1.6A2.4 2.4 0 0 1 19 6.2v2.7a2.3 2.3 0 0 0 2.3 2.3v1.6a2.3 2.3 0 0 0-2.3 2.3v2.7a2.4 2.4 0 0 1-2.4 2.4H15"/>
+      <circle cx="9.3" cy="12" r=".9" fill="currentColor" stroke="none"/>
+      <circle cx="14.7" cy="12" r=".9" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-table" viewBox="0 0 24 24">
+      <rect x="3" y="4.2" width="18" height="15.6" rx="2.4"/>
+      <path d="M3 9.2h18M9 4.2v15.6M15 4.2v15.6"/>
+    </symbol>
+    <symbol id="i-diff" viewBox="0 0 24 24">
+      <path d="M8.2 4.5v9.2M3.6 9.1h9.2M14.5 14.2h6M14.5 18.1h4.2"/>
+    </symbol>
+    <symbol id="i-token" viewBox="0 0 24 24">
+      <rect x="3.4" y="5.1" width="17.2" height="13.8" rx="3"/>
+      <circle cx="8.2" cy="9.6" r="1.5"/>
+      <path d="M11.2 9.6h6M8.2 13.6h9M8.2 16.2h5.8"/>
+    </symbol>
+    <symbol id="i-swatch" viewBox="0 0 24 24">
+      <circle cx="8" cy="8" r="3.8"/>
+      <circle cx="16" cy="8" r="3.8"/>
+      <circle cx="8" cy="16" r="3.8"/>
+      <circle cx="16" cy="16" r="3.8"/>
+    </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24">
+      <rect x="9" y="3" width="6" height="11" rx="3"/>
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/>
+    </symbol>
+    <symbol id="i-database" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="5.4" rx="7.5" ry="3"/>
+      <path d="M4.5 5.4v6.2c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V5.4M4.5 11.6v6.2c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-6.2"/>
+    </symbol>
+    <symbol id="i-calculator" viewBox="0 0 24 24">
+      <rect x="4" y="2.8" width="16" height="18.4" rx="2.8"/>
+      <path d="M7 6.6h10M7.5 11h1M11.5 11h1M15.5 11h1M7.5 15h1M11.5 15h1M15.5 15h1M7.5 18.5h1M11.5 18.5h1M15.5 18.5h1"/>
+    </symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24">
+      <path d="M6 2.8v15.2h15.2M2.8 6H18v15.2"/>
+    </symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="6.2" height="6.2" rx="1.3"/>
+      <rect x="14.8" y="3" width="6.2" height="6.2" rx="1.3"/>
+      <rect x="3" y="14.8" width="6.2" height="6.2" rx="1.3"/>
+      <path d="M15 14.8h2.6v2.6H15zM19.5 19.5h1.5v1.5h-1.5zM15 20.2h1.4M20.5 15.1v2M18.2 17.4h2.3"/>
+    </symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24">
+      <path d="M12 3a9 9 0 1 0 0 18h1.3a2.1 2.1 0 0 0 1.5-3.6 1.8 1.8 0 0 1 1.3-3.1h2a4.2 4.2 0 0 0 4.2-4.2C22.3 6.1 17.7 3 12 3Z"/>
+      <circle cx="7.7" cy="10.1" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="10.8" cy="6.8" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="15.6" cy="7.9" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="7.1" cy="14.7" r="1" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-key" viewBox="0 0 24 24">
+      <circle cx="8" cy="8.1" r="4.2"/>
+      <path d="m11.1 11.2 8.7 8.7M15.3 15.4l2-2M18 18.1l2-2"/>
+    </symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24">
+      <rect x="2.7" y="8.4" width="18.6" height="7.2" rx="2" transform="rotate(-15 12 12)"/>
+      <path d="m7.3 9.8.7 2.6M10.3 9l.5 1.9M13.3 8.2l.7 2.6M16.3 7.4l.5 1.9"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.7"/>
+      <path d="M12 7.2V12l3.2 2"/>
+    </symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24">
+      <path d="M9 4H4v5M15 4h5v5M20 15v5h-5M4 15v5h5"/>
+    </symbol>
+    <symbol id="i-image" viewBox="0 0 24 24">
+      <rect x="3" y="4.2" width="18" height="15.6" rx="3"/>
+      <circle cx="8.2" cy="9.3" r="1.6"/>
+      <path d="m4.3 17.3 4.3-4.1a2 2 0 0 1 2.7 0l2.3 2.2a2 2 0 0 0 2.7 0l1.1-1.1a2 2 0 0 1 2.7 0l1.6 1.5"/>
+    </symbol>
+    <symbol id="i-type" viewBox="0 0 24 24">
+      <path d="M4 6.5V4.2h16v2.3M12 4.2v15.6M8.5 19.8h7"/>
+    </symbol>
+    <symbol id="i-link" viewBox="0 0 24 24">
+      <path d="M9.6 14.4a4.2 4.2 0 0 0 6 0l2.7-2.7a4.24 4.24 0 0 0-6-6l-1.1 1.1"/>
+      <path d="M14.4 9.6a4.2 4.2 0 0 0-6 0l-2.7 2.7a4.24 4.24 0 0 0 6 6l1.1-1.1"/>
+    </symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24">
+      <path d="M11.1 3.3c.2 3.2 1.8 4.8 5 5-3.2.2-4.8 1.8-5 5-.2-3.2-1.8-4.8-5-5 3.2-.2 4.8-1.8 5-5Z"/>
+      <path d="M18.2 14.1c.12 2.06 1.1 3.05 3.1 3.17-2 .12-2.98 1.11-3.1 3.17-.12-2.06-1.1-3.05-3.1-3.17 2-.12 2.98-1.11 3.1-3.17ZM5.1 13.4c.1 1.55.84 2.3 2.35 2.4-1.51.1-2.25.85-2.35 2.4-.1-1.55-.84-2.3-2.35-2.4 1.51-.1 2.25-.85 2.35-2.4Z"/>
+    </symbol>
+    <symbol id="i-command" viewBox="0 0 24 24">
+      <path d="M9 8.5V6.2A3.2 3.2 0 1 0 5.8 9.4H9m6 0V6.2a3.2 3.2 0 1 1 3.2 3.2H15M9 15.5v2.3a3.2 3.2 0 1 1-3.2-3.2H9m6 0h2.3a3.2 3.2 0 1 1-3.2 3.2v-2.3M9 9h6v6H9z"/>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <path d="m3.7 10.6 8.3-7 8.3 7v8a2 2 0 0 1-2 2h-4.1v-5.7H9.8v5.7H5.7a2 2 0 0 1-2-2v-8Z"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M4.5 7.2h15M9.2 3.8h5.6M6.6 7.2l.9 12.2a1.8 1.8 0 0 0 1.8 1.7h5.4a1.8 1.8 0 0 0 1.8-1.7l.9-12.2M10 11v6M14 11v6"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <path d="M2.6 12s3.4-5.5 9.4-5.5 9.4 5.5 9.4 5.5-3.4 5.5-9.4 5.5S2.6 12 2.6 12Z"/>
+      <circle cx="12" cy="12" r="2.7"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M3 12h18M12 3c2.55 2.75 3.85 5.75 3.85 9S14.55 18.25 12 21c-2.55-2.75-3.85-5.75-3.85-9S9.45 5.75 12 3Z"/>
+    </symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24">
+      <path d="M4 8.5V5a1 1 0 0 1 1-1h3.5M20 8.5V5a1 1 0 0 0-1-1h-3.5M4 15.5V19a1 1 0 0 0 1 1h3.5M20 15.5V19a1 1 0 0 1-1 1h-3.5M7 9.5h10M7 12.5h7M7 15.5h4"/>
+    </symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="m15.4 8.6-1.7 5.1-5.1 1.7 1.7-5.1 5.1-1.7Z"/>
+    </symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24">
+      <path d="M6.2 3.5h7.1l4.8 4.8V19a1.7 1.7 0 0 1-1.7 1.7H6.2A1.7 1.7 0 0 1 4.5 19V5.2a1.7 1.7 0 0 1 1.7-1.7Z"/>
+      <path d="M13.2 3.6v5h5M8 13h7M8 16.5h5"/>
+    </symbol>
+    <symbol id="i-code" viewBox="0 0 24 24">
+      <path d="m8.3 7.2-4.8 4.8 4.8 4.8M15.7 7.2l4.8 4.8-4.8 4.8M13.6 4.8l-3.2 14.4"/>
+    </symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24">
+      <path d="M9.7 3.5 7.4 20.5M16.6 3.5l-2.3 17M4.3 9h16M3.7 15h16"/>
+    </symbol>
+    <symbol id="i-id" viewBox="0 0 24 24">
+      <rect x="3" y="4.8" width="18" height="14.4" rx="3"/>
+      <circle cx="9" cy="10.8" r="2.1"/>
+      <path d="M5.7 16c.65-1.55 1.75-2.35 3.3-2.35S11.65 14.45 12.3 16M14.7 9.8h3.5M14.7 13.6h3.5"/>
+    </symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24">
+      <rect x="3.4" y="5.2" width="17.2" height="15" rx="2.8"/>
+      <path d="M7.8 3.2v4M16.2 3.2v4M3.4 10h17.2M7.5 13.7h2M11.1 13.7h2M14.7 13.7h2M7.5 17.1h2M11.1 17.1h2"/>
+    </symbol>
+    <symbol id="i-user" viewBox="0 0 24 24">
+      <circle cx="12" cy="8.4" r="3.6"/>
+      <path d="M4.9 20.2c.7-4.1 3.2-6.2 7.1-6.2s6.4 2.1 7.1 6.2"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 10.6v6M12 7.5v.1"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="m8.5 5.8 9.8 6.2-9.8 6.2V5.8Z"/>
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24">
+      <path d="M12 2.7 20 6v5.7c0 4.7-3.1 8.1-8 9.6-4.9-1.5-8-4.9-8-9.6V6l8-3.3Z"/>
+      <path d="m8.7 11.9 2.2 2.2 4.4-4.5"/>
+    </symbol>
+    <symbol id="i-external" viewBox="0 0 24 24">
+      <path d="M13.5 4.5H20v6.5M20 4.5 10.8 13.7"/>
+      <path d="M17.8 13.6v4.2a1.7 1.7 0 0 1-1.7 1.7H5.6a1.7 1.7 0 0 1-1.7-1.7V7.3a1.7 1.7 0 0 1 1.7-1.7h4.1"/>
+    </symbol>
+  </svg>
+
+  <!-- 顶部 chrome：桌面导航、搜索入口、时钟入口、主题切换。 -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner glass">
+      <a class="brand" href="./" id="brandLink" aria-label="返回程宇首页">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-mark"/></svg></span>
+        <span class="brand-word">程宇<span class="brand-tag">LUMEN TOOLKIT</span></span>
+      </a>
+
+      <nav class="main-nav" aria-label="主导航">
+        <button class="nav-pill is-active" type="button" data-nav="home">工具箱</button>
+        <button class="nav-pill" type="button" data-nav="favorites">收藏<span class="nav-badge" id="navFavCount" hidden>0</span></button>
+        <button class="nav-pill" type="button" data-open-author>作者</button>
+        <button class="nav-pill" type="button" data-open-about>关于</button>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="topbar-clock" type="button" data-open-clock aria-label="打开全屏本地时钟" title="打开全屏时钟">
+          <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+          <span data-now-clock>--:--</span>
+        </button>
+        <button class="search-trigger" type="button" data-open-search aria-label="搜索工具、站点或友情链接">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <span class="search-trigger-label">搜索工具与站点</span>
+          <kbd class="shortcut-hint" data-shortcut>⌘ K</kbd>
+        </button>
+        <button class="icon-button theme-toggle" type="button" id="themeToggle" aria-label="切换到深色模式">
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+        </button>
+      </div>
+      <span class="scroll-progress" aria-hidden="true"><i id="scrollProgress"></i></span>
+    </div>
+  </header>
+
+  <!--
+    主内容区：
+    - #homeView 是首页；
+    - #toolRoot 是工具页容器，由 07-routing.js 克隆模板后填充。
+    两者互斥显示，不创建页面级 iframe 或新窗口。
+  -->
+  <main id="main" class="app-main" tabindex="-1">
+    <section class="home-view" id="homeView">
+      <div class="container">
+        <section class="hero" aria-labelledby="heroTitle">
+          <div class="hero-copy">
+            <div class="eyebrow hero-enter">
+              <span class="live-dot" aria-hidden="true"></span>
+              <span>100% 本地运行</span>
+              <span class="eyebrow-rule" aria-hidden="true"></span>
+              <span>无需登录</span>
+            </div>
+            <h1 id="heroTitle" class="hero-enter">日常小事，<br><span class="glimmer">一气呵成。</span></h1>
+            <p class="lede hero-enter">一套精致、安静的本地工具。不上传，不等待，<br class="desktop-br">打开即用，顺手得像呼吸。</p>
+            <button class="hero-search glass hero-enter" type="button" data-open-search aria-label="打开搜索">
+              <span class="hero-search-icon"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></span>
+              <span class="hero-search-placeholder">搜索工具、站点或友情链接</span>
+              <span class="hero-search-key" data-shortcut>⌘ K</span>
+            </button>
+            <div class="hero-meta hero-enter">
+              <span><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span data-tool-total>30</span> 款常用工具</span>
+              <span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>数据不离开设备</span>
+            </div>
+          </div>
+
+          <div class="hero-art" id="heroArt">
+            <span class="art-halo" aria-hidden="true"></span>
+            <div class="art-parallax" id="artParallax">
+              <div class="liquid-object" aria-hidden="true">
+                <span class="object-glow object-glow-a"></span>
+                <span class="object-glow object-glow-b"></span>
+                <span class="object-glass"></span>
+                <span class="object-shine"></span>
+                <span class="object-rim"></span>
+                <div class="object-badge">
+                  <span class="object-badge-icon"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg></span>
+                  <span><strong>100% 本地</strong><small>文件不离开设备</small></span>
+                </div>
+                <div class="object-caption"><span>LIQUID</span><span class="caption-dot"></span><span>LOCAL</span></div>
+              </div>
+
+              <div class="card-orbit" id="cardOrbit" role="slider" tabindex="0" aria-label="拖动旋转五枚信息卡片" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0" aria-valuetext="旋转 0 度">
+                <button class="float-chip info-chip tools-chip" style="--a:-144deg" type="button" data-scroll-tools aria-label="查看全部本地工具">
+                  <span class="info-chip-metric" data-tool-total>30</span>
+                  <span class="info-chip-copy"><strong>款本地工具</strong><small>全部离线 · 打开即用</small></span>
+                </button>
+
+                <button class="float-chip info-chip search-chip" style="--a:144deg" type="button" data-open-search aria-label="打开快捷搜索">
+                  <kbd class="info-chip-key" data-shortcut>⌘ K</kbd>
+                  <span class="info-chip-copy"><strong>快捷搜索</strong><small>工具 · 站点 · 友情链接</small></span>
+                </button>
+
+                <div class="float-chip qr-chip" style="--a:-72deg" aria-hidden="true">
+                  <div class="qr-mini"><img src="assets/hero-qr.svg" alt="" width="160" height="160"></div>
+                  <div class="chip-caption"><span>轻扫即得</span><small>QR · 本地生成</small></div>
+                </div>
+
+                <div class="float-chip palette-chip" style="--a:0deg" aria-hidden="true">
+                  <div class="palette-swatches">
+                    <i style="--sw:#ff8f6b"></i><i style="--sw:#ffd66b"></i><i style="--sw:#7bd8c2"></i><i style="--sw:#7e8cff"></i><i style="--sw:#d38bff"></i>
+                  </div>
+                  <div class="chip-caption"><span>色彩实验室</span><small>随手取一份好颜色</small></div>
+                </div>
+
+                <button class="float-chip clock-chip" style="--a:72deg" type="button" data-open-clock aria-label="打开全屏本地时钟" title="打开全屏时钟">
+                  <span class="chip-time"><span data-now-clock>--:--</span><small class="chip-seconds" data-now-clock-seconds>:--</small></span>
+                  <span class="chip-date" data-now-date>今天</span>
+                  <span class="chip-live"><span class="live-dot"></span>本地时间<span class="chip-cta">全屏 ↗</span></span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <div class="recent-bar glass" id="recentBar" hidden>
+          <span class="recent-label"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>最近使用</span>
+          <div class="recent-list" id="recentList"></div>
+        </div>
+
+        <section class="tool-section" id="tools" aria-labelledby="toolsTitle">
+          <div class="section-head">
+            <div class="section-heading">
+              <span class="section-kicker">THE COLLECTION</span>
+              <div class="section-title-row">
+                <h2 id="toolsTitle">全部工具</h2>
+                <span class="count-pill" id="toolCount">30</span>
+              </div>
+              <p class="section-sub" id="toolsSubtitle">所有处理都发生在你的浏览器里。</p>
+            </div>
+            <div class="filter-scroller" role="group" aria-label="按分类筛选工具">
+              <div class="filter-row" id="filterRow">
+                <button class="filter-pill is-active" type="button" data-filter="all" aria-pressed="true">全部</button>
+                <button class="filter-pill" type="button" data-filter="dev" aria-pressed="false">开发</button>
+                <button class="filter-pill" type="button" data-filter="design" aria-pressed="false">设计</button>
+                <button class="filter-pill" type="button" data-filter="web" aria-pressed="false">网址</button>
+                <button class="filter-pill" type="button" data-filter="text" aria-pressed="false">文字</button>
+                <button class="filter-pill" type="button" data-filter="daily" aria-pressed="false">日常</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool-grid" id="toolGrid"></div>
+
+          <div class="tool-grid-toggle-wrap" id="toolGridToggleWrap" hidden>
+            <button class="tool-grid-toggle" id="toolGridToggle" type="button" aria-controls="toolGrid" aria-expanded="false">
+              <span class="tool-grid-toggle-label" id="toolGridToggleLabel">展开更多工具</span>
+              <span class="tool-grid-toggle-meta" id="toolGridToggleMeta"></span>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </button>
+          </div>
+
+          <div class="empty-state glass" id="gridEmpty" hidden>
+            <span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span>
+            <h3>还没有收藏任何工具</h3>
+            <p>点一下工具卡片右上角的星标，喜欢的小工具就会出现在这里。</p>
+            <button class="btn primary" type="button" id="emptyBrowse">浏览全部工具</button>
+          </div>
+        </section>
+
+        <section class="privacy-banner glass" aria-labelledby="privacyTitle">
+          <div class="privacy-glow" aria-hidden="true"></div>
+          <div class="privacy-copy">
+            <span class="section-kicker">PRIVATE BY DESIGN</span>
+            <h2 id="privacyTitle">你的数据，<br>留在你的设备。</h2>
+            <p>没有账号，没有上传，也没有悄悄运行的追踪器。解析与处理都在当前浏览器中完成；只有你主动点击的外部链接，才会打开对应的网站。</p>
+            <button class="text-link" type="button" data-open-about>
+              了解本地优先
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"/></svg>
+            </button>
+          </div>
+          <div class="privacy-facts">
+            <div class="fact"><strong>0</strong><span>数据上传</span></div>
+            <div class="fact"><strong>0</strong><span>追踪脚本</span></div>
+            <div class="fact"><strong data-tool-total>30</strong><span>本地工具</span></div>
+            <span class="fact-watermark" aria-hidden="true"><svg class="icon"><use href="#i-shield"/></svg></span>
+          </div>
+        </section>
+
+        <section class="friends-section" aria-labelledby="friendsTitle">
+          <div class="friends-head">
+            <div>
+              <span class="section-kicker">FRIENDS &amp; INSPIRATION</span>
+              <h2 id="friendsTitle">友情链接</h2>
+              <p>一些长期使用的标准、文档与灵感站点，感谢它们让 Web 更好。</p>
+            </div>
+            <span class="friends-note"><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg>外部网站 · 新标签页打开</span>
+          </div>
+          <div class="friends-grid" id="friendsGrid"></div>
+        </section>
+
+        <footer class="site-footer">
+          <div class="footer-main">
+            <div class="footer-brand">
+              <span class="brand-mark small"><svg class="icon" aria-hidden="true"><use href="#i-mark"/></svg></span>
+              <div><strong>程宇</strong><span>把日常小事，做得顺手一点。</span></div>
+            </div>
+            <div class="footer-links">
+              <button type="button" data-open-about>关于与隐私</button>
+              <button type="button" data-open-author>作者简介</button>
+              <button type="button" data-open-search>搜索工具与站点</button>
+              <button type="button" data-theme-action>切换外观</button>
+            </div>
+          </div>
+          <div class="footer-meta">
+            <span>本地优先 · 为专注而做 · 2026.10.20</span>
+            <span>© 2026 程宇 · LUMEN TOOLKIT</span>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+    <div id="toolRoot" hidden></div>
+  </main>
+
+  <!-- 手机底部导航；桌面端由 CSS 隐藏。 -->
+  <nav class="mobile-dock glass" aria-label="快捷导航">
+    <button class="dock-item is-active" type="button" data-nav="home">
+      <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span>工具</span>
+    </button>
+    <button class="dock-item" type="button" data-nav="favorites">
+      <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg><span>收藏</span>
+      <i class="dock-badge" id="dockFavCount" hidden></i>
+    </button>
+    <button class="dock-item" type="button" data-open-search>
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>搜索</span>
+    </button>
+    <button class="dock-item" type="button" data-open-author>
+      <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg><span>作者</span>
+    </button>
+    <button class="dock-item" type="button" data-theme-action>
+      <svg class="icon dock-icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+      <svg class="icon dock-icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+      <span>外观</span>
+    </button>
+  </nav>
+
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- 全局覆盖层：搜索、关于、作者、全屏时钟，均为原生 <dialog>。 -->
+  <dialog class="palette-dialog" id="paletteDialog" aria-labelledby="paletteLabel">
+    <div class="palette-surface glass">
+      <h2 class="sr-only" id="paletteLabel">搜索工具、站点与命令</h2>
+      <div class="palette-search">
+        <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="paletteInput" type="text" placeholder="搜索工具、站点、友链或输入命令…" autocomplete="off" spellcheck="false" aria-controls="paletteResults" aria-autocomplete="list">
+        <button class="palette-esc" type="button" id="paletteClose" aria-label="关闭搜索"><span class="palette-esc-desktop">ESC</span><span class="palette-esc-mobile">关闭</span></button>
+      </div>
+      <div class="palette-results" id="paletteResults" role="listbox" aria-label="工具、站点和友情链接搜索结果"></div>
+      <div class="palette-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+        <span><kbd>↵</kbd> 打开</span>
+        <span class="palette-fuzzy-hint">支持模糊匹配</span>
+        <span class="palette-footer-brand">程宇 <span>/</span> local first</span>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="about-dialog" id="aboutDialog" aria-labelledby="aboutTitle">
+    <div class="about-surface glass">
+      <button class="modal-close" type="button" id="aboutClose" aria-label="关闭关于窗口">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      <span class="about-mark"><svg class="icon" aria-hidden="true"><use href="#i-mark"/></svg></span>
+      <span class="section-kicker">ABOUT LUMEN</span>
+      <h2 id="aboutTitle">在本地，刚刚好。</h2>
+      <p class="about-intro">程宇 · Lumen Toolkit 是一套为日常小事而做的本地工具。它不要求你注册，也不把你的内容送往任何服务器——打开、使用、关掉，干净利落。</p>
+      <div class="about-grid">
+        <div class="about-item">
+          <span class="about-num">01</span>
+          <h3>你的内容，不出设备</h3>
+          <p>文本、图片、密码与二维码均在浏览器内生成，没有上传接口。</p>
+        </div>
+        <div class="about-item">
+          <span class="about-num">02</span>
+          <h3>没有账户，没有追踪</h3>
+          <p>收藏与最近使用只保存在本机 localStorage 中，可随时清除。</p>
+        </div>
+        <div class="about-item">
+          <span class="about-num">03</span>
+          <h3>为手感而设计</h3>
+          <p>键盘、触控、深浅外观与减少动态效果，都认真适配。</p>
+        </div>
+      </div>
+      <div class="about-shortcuts">
+        <span>快捷键</span>
+        <div><kbd data-shortcut>⌘ K</kbd><span>搜索</span></div>
+        <div><kbd>ESC</kbd><span>关闭</span></div>
+        <div><kbd>↑ ↓</kbd><span>选择</span></div>
+        <div><kbd>↵</kbd><span>打开</span></div>
+      </div>
+      <div class="about-footer">
+        <span>程宇 1.0 · 本地优先</span>
+        <button class="text-link about-author-link" type="button" data-open-author>
+          作者简介
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"/></svg>
+        </button>
+        <button class="btn primary" type="button" id="aboutDone">开始使用</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="author-dialog" id="authorDialog" aria-labelledby="authorPageTitle">
+    <div class="author-screen">
+      <button class="author-floating-close" type="button" id="authorClose" aria-label="关闭作者简介">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+
+      <div class="author-scroll">
+        <main class="author-hero">
+          <div class="author-hero-copy">
+            <span class="section-kicker">程宇 · AUTHOR / MAKER</span>
+            <h1 id="authorPageTitle">把日常小事，<br><em>做得顺手一点。</em></h1>
+            <p class="author-lead">我是程宇，一个喜欢把日常小事做得更顺手的独立设计开发者。每天写字、修界面、打磨那些不起眼的小地方。</p>
+            <p class="author-lead secondary">程宇最初只是我的私人工具箱，后来越来越多朋友需要它，于是留了下来。我希望它安静、快速、可靠——不喧哗，不添乱，打开就能用，关掉就消失。</p>
+            <div class="author-tags">
+              <span>独立设计</span><span>本地优先</span><span>长期维护</span>
+            </div>
+          </div>
+
+          <div class="author-portrait-panel">
+            <span class="author-portrait-ring" aria-hidden="true"></span>
+            <span class="author-portrait-ring is-inner" aria-hidden="true"></span>
+            <img class="author-avatar" src="assets/author-avatar.jpg" alt="程宇的头像" width="900" height="900">
+            <span class="author-portrait-caption">LOCAL FIRST · 2026</span>
+          </div>
+        </main>
+
+        <section class="author-principles" aria-label="作者理念">
+          <article>
+            <span class="author-index">01 / QUIET</span>
+            <h2>安静</h2>
+            <p>好的工具不抢注意力。没有弹窗打扰，没有多余的推荐，只在需要的时候出现。</p>
+          </article>
+          <article>
+            <span class="author-index">02 / LOCAL</span>
+            <h2>本地</h2>
+            <p>内容留在你的设备里。没有账号、没有上传，也没有悄悄运行的追踪器。</p>
+          </article>
+          <article>
+            <span class="author-index">03 / LASTING</span>
+            <h2>长期</h2>
+            <p>把每一个小工具做完整、测稳定，再做下一个。慢一点没关系，好用最重要。</p>
+          </article>
+        </section>
+
+        <section class="author-note">
+          <blockquote>“把复杂留给自己，<br>把顺手留给使用者。”</blockquote>
+          <aside class="author-contact" aria-label="作者联系方式">
+            <span class="author-contact-kicker">CONTACT / 联系</span>
+            <a class="author-contact-mail" href="mailto:hello@lumen.local">hello@lumen.local</a>
+            <div class="author-contact-list">
+              <div><span>GitHub</span><b>github.com/lumen-toolkit</b></div>
+              <div><span>微信</span><b>LumenToolkit</b></div>
+              <div><span>小红书</span><b>@程宇</b></div>
+            </div>
+            <p>合作、设计交流，或者只是聊聊工具，都欢迎。</p>
+          </aside>
+        </section>
+
+        <footer class="author-footer">
+          <span>程宇 · LUMEN TOOLKIT</span>
+          <div class="author-actions">
+            <button class="text-link" type="button" data-open-about>关于与隐私</button>
+            <button class="btn primary" type="button" id="authorExplore">回到工具箱<svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="clock-dialog" id="clockDialog" aria-labelledby="clockScreenTitle">
+    <div class="clock-screen" id="clockScreen" tabindex="-1">
+      <button class="clock-close" type="button" id="clockClose" aria-label="关闭全屏时钟">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+      <button class="clock-focus-exit" type="button" id="clockFocusExit" hidden>退出专注</button>
+      <button class="clock-focus-customize" type="button" id="clockFocusCustomize" aria-expanded="false" aria-controls="clockFocusPanel" hidden>自定义</button>
+
+      <div class="clock-shell">
+        <header class="clock-header">
+          <span class="clock-brand">
+            <span class="brand-mark small"><svg class="icon" aria-hidden="true"><use href="#i-mark"/></svg></span>
+            <strong>程宇</strong><span>/ TIME</span>
+          </span>
+          <span class="clock-live-tag"><span class="live-dot"></span>LIVE · 本地时间</span>
+        </header>
+
+        <h2 class="sr-only" id="clockScreenTitle">全屏本地时钟、专注模式与计时</h2>
+
+        <main class="clock-main">
+          <section class="clock-digital">
+            <span class="section-kicker">CHRONOGRAPH / LOCAL</span>
+            <div class="clock-big">
+              <span id="clockBigTime">--:--</span>
+              <span class="clock-big-seconds" id="clockBigSeconds">:--</span>
+              <span class="clock-period" id="clockPeriod" hidden>下午</span>
+            </div>
+            <span class="clock-focus-rule" aria-hidden="true"><i id="clockFocusRule"></i></span>
+            <p class="clock-date" id="clockDate">正在读取本地时间…</p>
+            <p class="clock-zone" id="clockZone">—</p>
+            <div class="clock-dayline">
+              <span><i></i>今天已走过</span>
+              <strong id="clockDayProgressText">—</strong>
+            </div>
+          </section>
+
+          <section class="clock-dial-wrap" aria-hidden="true">
+            <div class="clock-dial">
+              <span class="clock-day-ring" id="clockDayRing"></span>
+              <span class="clock-hand clock-hour" id="clockHourHand"></span>
+              <span class="clock-hand clock-minute" id="clockMinuteHand"></span>
+              <span class="clock-hand clock-second" id="clockSecondHand"></span>
+              <span class="clock-center-dot"></span>
+            </div>
+            <span class="clock-dial-caption" id="clockDialCaption">LOCAL · 24H</span>
+          </section>
+        </main>
+
+        <section class="clock-progress-grid" aria-label="时间进度">
+          <article class="clock-metric">
+            <div class="clock-metric-head"><span>今天</span><strong id="clockDayMetric">—</strong></div>
+            <i class="clock-metric-bar"><b id="clockDayBar"></b></i>
+          </article>
+          <article class="clock-metric">
+            <div class="clock-metric-head"><span>本周</span><strong id="clockWeekMetric">—</strong></div>
+            <i class="clock-metric-bar"><b id="clockWeekBar"></b></i>
+          </article>
+          <article class="clock-metric">
+            <div class="clock-metric-head"><span>今年</span><strong id="clockYearMetric">—</strong></div>
+            <i class="clock-metric-bar"><b id="clockYearBar"></b></i>
+          </article>
+        </section>
+
+        <section class="clock-timers" aria-label="计时工具">
+          <article class="clock-timer-card">
+            <div class="clock-timer-head"><span>秒表</span><strong id="stopwatchDisplay">00:00.00</strong></div>
+            <div class="clock-timer-actions">
+              <button class="clock-control" type="button" id="stopwatchToggle">开始</button>
+              <button class="clock-control" type="button" id="stopwatchReset">重置</button>
+            </div>
+          </article>
+          <article class="clock-timer-card" id="countdownCard">
+            <div class="clock-timer-head"><span>倒计时</span><strong id="countdownDisplay">05:00</strong></div>
+            <div class="clock-countdown-presets" role="group" aria-label="倒计时预设">
+              <button type="button" data-countdown="60">1 分</button>
+              <button type="button" data-countdown="300" class="is-active">5 分</button>
+              <button type="button" data-countdown="600">10 分</button>
+              <button type="button" data-countdown="1500">25 分</button>
+            </div>
+            <div class="clock-timer-actions">
+              <button class="clock-control" type="button" id="countdownToggle">开始</button>
+              <button class="clock-control" type="button" id="countdownReset">重置</button>
+            </div>
+          </article>
+        </section>
+
+        <footer class="clock-footer">
+          <div class="clock-controls">
+            <button class="clock-control" type="button" id="clockFormatToggle" aria-label="切换 12 小时制">24 小时</button>
+            <button class="clock-control is-on" type="button" id="clockSecondsToggle" aria-pressed="true">显示秒</button>
+            <button class="clock-control" type="button" id="clockFocus">仅时间</button>
+            <button class="clock-control" type="button" id="clockFullscreen">全屏</button>
+            <button class="clock-control" type="button" id="clockCopy">复制时间</button>
+          </div>
+          <span class="clock-note">Esc 关闭 · 时间只在本机计算</span>
+        </footer>
+      </div>
+
+      <section class="clock-focus-panel" id="clockFocusPanel" role="dialog" aria-labelledby="clockFocusPanelTitle" hidden>
+        <div class="clock-focus-panel-head">
+          <div>
+            <span class="clock-focus-eyebrow">FOCUS DISPLAY</span>
+            <h3 id="clockFocusPanelTitle">时间显示</h3>
+          </div>
+          <span class="clock-focus-preview" id="clockFocusPreview" aria-hidden="true">--:--</span>
+        </div>
+
+        <div class="clock-focus-group clock-focus-group-format">
+          <span class="clock-focus-group-label">格式</span>
+          <div class="clock-focus-options" role="group" aria-label="时间格式">
+            <button class="clock-focus-option" type="button" data-focus-format="24">21:38</button>
+            <button class="clock-focus-option" type="button" data-focus-format="24s">21:38:29</button>
+            <button class="clock-focus-option" type="button" data-focus-format="12">9:38 下午</button>
+            <button class="clock-focus-option" type="button" data-focus-format="12s">9:38:29 下午</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-group">
+          <label class="clock-focus-group-label" for="clockFocusSize">大小 <output id="clockFocusSizeValue" for="clockFocusSize">100%</output></label>
+          <input class="clock-focus-range" type="range" id="clockFocusSize" min="55" max="180" step="1" value="100" aria-label="时间大小">
+        </div>
+
+        <div class="clock-focus-group">
+          <span class="clock-focus-group-label">字重</span>
+          <div class="clock-focus-options" role="group" aria-label="时间字重">
+            <button class="clock-focus-option" type="button" data-focus-weight="thin">极细</button>
+            <button class="clock-focus-option" type="button" data-focus-weight="light">细</button>
+            <button class="clock-focus-option" type="button" data-focus-weight="regular">常规</button>
+            <button class="clock-focus-option" type="button" data-focus-weight="medium">中粗</button>
+            <button class="clock-focus-option" type="button" data-focus-weight="bold">粗</button>
+            <button class="clock-focus-option" type="button" data-focus-weight="black">特粗</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-group">
+          <label class="clock-focus-group-label" for="clockFocusTracking">字距 <output id="clockFocusTrackingValue" for="clockFocusTracking">-0.06em</output></label>
+          <input class="clock-focus-range" type="range" id="clockFocusTracking" min="-12" max="18" step="1" value="-6" aria-label="时间字距">
+        </div>
+
+        <div class="clock-focus-group">
+          <span class="clock-focus-group-label">对齐</span>
+          <div class="clock-focus-options" role="group" aria-label="时间对齐">
+            <button class="clock-focus-option" type="button" data-focus-align="left">靠左</button>
+            <button class="clock-focus-option" type="button" data-focus-align="center">居中</button>
+            <button class="clock-focus-option" type="button" data-focus-align="right">靠右</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-group">
+          <label class="clock-focus-group-label" for="clockFocusOffset">垂直 <output id="clockFocusOffsetValue" for="clockFocusOffset">0vh</output></label>
+          <input class="clock-focus-range" type="range" id="clockFocusOffset" min="-18" max="18" step="1" value="0" aria-label="时间垂直位置">
+        </div>
+
+        <div class="clock-focus-group">
+          <span class="clock-focus-group-label">氛围</span>
+          <div class="clock-focus-options" role="group" aria-label="专注模式氛围">
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="auto">自动</button>
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="dawn">晨光</button>
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="day">日光</button>
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="dusk">黄昏</button>
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="night">夜色</button>
+            <button class="clock-focus-option" type="button" data-focus-atmosphere="clear">纯净</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-group">
+          <span class="clock-focus-group-label">光晕</span>
+          <div class="clock-focus-options" role="group" aria-label="时间光晕">
+            <button class="clock-focus-option" type="button" data-focus-glow="off">关闭</button>
+            <button class="clock-focus-option" type="button" data-focus-glow="on">柔光</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-group">
+          <span class="clock-focus-group-label">样式</span>
+          <div class="clock-focus-styles" role="group" aria-label="时间样式">
+            <button class="clock-focus-style" type="button" data-focus-style="minimal" aria-pressed="true"><span class="focus-style-sample">Aa</span>极简</button>
+            <button class="clock-focus-style" type="button" data-focus-style="mono" aria-pressed="false"><span class="focus-style-sample mono">Aa</span>等宽</button>
+            <button class="clock-focus-style" type="button" data-focus-style="serif" aria-pressed="false"><span class="focus-style-sample serif">Aa</span>衬线</button>
+            <button class="clock-focus-style" type="button" data-focus-style="outline" aria-pressed="false"><span class="focus-style-sample outline">Aa</span>描边</button>
+          </div>
+        </div>
+
+        <div class="clock-focus-panel-foot">
+          <button class="clock-focus-reset" type="button" id="clockFocusReset">恢复默认</button>
+          <button class="clock-focus-done" type="button" id="clockFocusDone">完成</button>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Tool panels -->
+  <!--
+    工具面板模板（30 个）：
+    - id 必须是 `tpl-<toolId>`，由 07-routing.js 读取；
+    - 每个工具在使用时由 tool-router.js 调用 `init<Tool>Tool()`；
+    - 模板内的 ID 必须全局唯一，不要在模板里放重复 ID；
+    - 工具离开页面时，初始化函数返回的 cleanup 会被执行。
+    这是所有工具共同遵循的约定，后续新增工具不需要再重复这套说明。
+  -->
+  <template id="tpl-json">
+    <div class="tool-panel json-panel">
+      <div class="json-grid">
+        <section class="code-card" aria-labelledby="jsonInputLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="jsonInputLabel">source.json</span>
+            <span class="status-pill is-valid" id="jsonStatus"><span class="status-dot"></span>有效</span>
+          </div>
+          <div class="code-input-wrap">
+            <textarea id="jsonInput" class="code-area" spellcheck="false" aria-label="JSON 输入" placeholder="在这里粘贴 JSON…"></textarea>
+            <p class="inline-error" id="jsonError" hidden></p>
+          </div>
+          <div class="code-actions">
+            <button class="btn small primary" type="button" id="jsonFormat"><svg class="icon" aria-hidden="true"><use href="#i-braces"/></svg>格式化</button>
+            <button class="btn small" type="button" id="jsonMinify">压缩</button>
+            <button class="btn small ghost" type="button" id="jsonSort" aria-pressed="false">键排序</button>
+            <button class="btn small ghost" type="button" id="jsonTypescript">TS 类型</button>
+            <button class="btn small ghost" type="button" id="jsonYaml">YAML</button>
+            <button class="btn small ghost" type="button" id="jsonSample">示例</button>
+            <button class="btn small ghost" type="button" id="jsonClear">清空</button>
+          </div>
+        </section>
+        <section class="code-card output-card" aria-labelledby="jsonOutputLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights muted" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="jsonOutputLabel">formatted.json</span>
+            <button class="chrome-action" type="button" id="jsonCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button>
+          </div>
+          <pre class="code-output" tabindex="0" aria-label="格式化后的 JSON"><code id="jsonOutput"></code></pre>
+          <div class="code-stats">
+            <span id="jsonStatLine">0 行</span>
+            <span id="jsonStatSize">0 B</span>
+            <span class="grow"></span>
+            <button class="chrome-action" type="button" id="jsonDownload"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>下载</span></button>
+          </div>
+        </section>
+      </div>
+      <div class="tool-tip"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span>输入时会实时校验，输出始终在本地生成。</span><kbd><span data-mod>⌘</span> ↵</kbd><span>格式化</span></div>
+    </div>
+  </template>
+
+  <template id="tpl-qr">
+    <div class="tool-panel qr-panel">
+      <div class="qr-grid">
+        <section class="control-card">
+          <div class="field-block">
+            <label class="field-label" for="qrText">二维码内容</label>
+            <textarea id="qrText" class="field-control" rows="3" spellcheck="false" placeholder="输入网址、文字或联系方式…">程宇工具箱 · 日常小事，一气呵成。</textarea>
+            <div class="field-note"><span id="qrCharCount">0 / 1200</span><span>支持链接与中文</span></div>
+            <div class="segmented qr-templates" id="qrTemplates" role="group" aria-label="二维码内容模板">
+              <button class="is-active" type="button" data-qr-template="text">文字</button>
+              <button type="button" data-qr-template="url">网址</button>
+              <button type="button" data-qr-template="wifi">Wi-Fi</button>
+              <button type="button" data-qr-template="contact">联系人</button>
+              <button type="button" data-qr-template="email">邮件</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-block">
+              <span class="field-label">前景色</span>
+              <label class="color-field">
+                <input type="color" id="qrFg" value="#141418">
+                <span class="color-swatch" id="qrFgSwatch"></span>
+                <span class="color-code" id="qrFgCode">#141418</span>
+              </label>
+            </div>
+            <div class="field-block">
+              <span class="field-label">背景色</span>
+              <label class="color-field">
+                <input type="color" id="qrBg" value="#ffffff">
+                <span class="color-swatch" id="qrBgSwatch"></span>
+                <span class="color-code" id="qrBgCode">#FFFFFF</span>
+              </label>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-block">
+              <label class="field-label" for="qrEc">纠错级别</label>
+              <div class="select-wrap">
+                <select id="qrEc" class="field-control">
+                  <option value="L">L · 低</option>
+                  <option value="M" selected>M · 标准</option>
+                  <option value="Q">Q · 较高</option>
+                  <option value="H">H · 最高</option>
+                </select>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+            <div class="field-block">
+              <label class="field-label" for="qrSize">导出尺寸</label>
+              <div class="select-wrap">
+                <select id="qrSize" class="field-control">
+                  <option value="512">512 × 512</option>
+                  <option value="1024" selected>1024 × 1024</option>
+                  <option value="2048">2048 × 2048</option>
+                </select>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="preset-block">
+            <span class="field-label">配色灵感</span>
+            <div class="preset-row" id="qrPresets">
+              <button class="color-preset is-active" type="button" data-fg="#141418" data-bg="#ffffff" aria-label="墨黑与白"><i style="--a:#141418;--b:#fff"></i></button>
+              <button class="color-preset" type="button" data-fg="#4338ca" data-bg="#eef2ff" aria-label="靛蓝与雾蓝"><i style="--a:#4338ca;--b:#eef2ff"></i></button>
+              <button class="color-preset" type="button" data-fg="#085f4b" data-bg="#e8fff8" aria-label="松绿与薄荷"><i style="--a:#085f4b;--b:#e8fff8"></i></button>
+              <button class="color-preset" type="button" data-fg="#7f1d3d" data-bg="#fff1f2" aria-label="莓红与玫瑰"><i style="--a:#7f1d3d;--b:#fff1f2"></i></button>
+            </div>
+          </div>
+        </section>
+        <section class="qr-preview-card">
+          <div class="qr-preview-stage">
+            <div class="qr-paper" id="qrPaper">
+              <canvas id="qrCanvas" width="640" height="640" aria-label="生成的二维码"></canvas>
+              <div class="qr-empty" id="qrEmpty" hidden>写下一点什么，<br>二维码就会出现在这里。</div>
+            </div>
+          </div>
+          <p class="qr-caption"><span class="live-dot"></span>实时生成 · 不会上传</p>
+          <div class="qr-actions">
+            <button class="btn primary" type="button" id="qrDownload"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载 PNG</button>
+            <button class="btn" type="button" id="qrDownloadSvg" disabled>下载 SVG</button>
+            <span class="qr-file-size" id="qrSizeLabel">1024 px</span>
+          </div>
+          <p class="qr-error" id="qrError" hidden></p>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-color">
+    <div class="tool-panel color-panel">
+      <div class="color-grid">
+        <section class="color-preview-column">
+          <div class="color-preview" id="colorPreview">
+            <div class="color-preview-head">
+              <span>COLOR LAB</span>
+              <button class="preview-copy" type="button" id="colorCopyBig" aria-label="复制颜色值"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+            </div>
+            <div class="color-preview-body">
+              <span class="color-tone" id="colorTone">柔和蓝</span>
+              <strong id="colorHexBig">#5B7CFA</strong>
+            </div>
+          </div>
+          <div class="color-inline-tools">
+            <button class="icon-button soft" type="button" id="colorEyedropper" hidden aria-label="从屏幕取色" title="从屏幕取色">
+              <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
+            </button>
+            <label class="native-color-button" title="打开取色器">
+              <input type="color" id="colorPicker" value="#5b7cfa">
+              <svg class="icon" aria-hidden="true"><use href="#i-palette"/></svg>
+              <span>取色</span>
+            </label>
+            <label class="hex-input-wrap" for="colorHexInput">
+              <span>#</span>
+              <input id="colorHexInput" type="text" maxlength="7" value="5B7CFA" spellcheck="false" aria-label="输入十六进制颜色">
+            </label>
+            <button class="icon-button soft" type="button" id="colorRandom" aria-label="随机颜色" title="随机颜色">
+              <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>
+            </button>
+          </div>
+          <div class="color-harmony">
+            <div class="color-harmony-head"><span>色彩关系</span><span>点击应用</span></div>
+            <div class="color-harmony-list" id="harmonyList"></div>
+          </div>
+        </section>
+        <section class="color-control-column">
+          <div class="slider-block">
+            <div class="slider-label"><label for="hueSlider">色相</label><span><strong id="hueValue">224</strong>°</span></div>
+            <input class="range hue-range" id="hueSlider" type="range" min="0" max="360" value="224" aria-label="色相">
+          </div>
+          <div class="slider-block">
+            <div class="slider-label"><label for="satSlider">饱和度</label><span><strong id="satValue">89</strong>%</span></div>
+            <input class="range" id="satSlider" type="range" min="0" max="100" value="89" aria-label="饱和度">
+          </div>
+          <div class="slider-block">
+            <div class="slider-label"><label for="lightSlider">明度</label><span><strong id="lightValue">67</strong>%</span></div>
+            <input class="range" id="lightSlider" type="range" min="0" max="100" value="67" aria-label="明度">
+          </div>
+          <div class="color-values">
+            <button class="value-row" type="button" data-copy-format="hex"><span>HEX</span><code id="valueHex">#5B7CFA</code><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+            <button class="value-row" type="button" data-copy-format="rgb"><span>RGB</span><code id="valueRgb">91, 124, 250</code><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+            <button class="value-row" type="button" data-copy-format="hsl"><span>HSL</span><code id="valueHsl">224, 89%, 67%</code><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+            <button class="value-row" type="button" data-copy-format="css"><span>CSS</span><code>变量</code><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+          </div>
+          <div class="contrast-block" aria-label="与黑色和白色文字的对比度">
+            <div class="contrast-head"><span>文本对比度</span><span>WCAG</span></div>
+            <div class="contrast-grid">
+              <div class="contrast-card">
+                <span class="contrast-sample" id="contrastSampleLight">Aa</span>
+                <span class="contrast-copy"><b>白底</b><small>当前色文字</small></span>
+                <span class="contrast-value" id="contrastWhite">—</span>
+                <span class="contrast-grade" id="contrastWhiteGrade">—</span>
+              </div>
+              <div class="contrast-card">
+                <span class="contrast-sample is-dark" id="contrastSampleDark">Aa</span>
+                <span class="contrast-copy"><b>深底</b><small>当前色文字</small></span>
+                <span class="contrast-value" id="contrastDark">—</span>
+                <span class="contrast-grade" id="contrastDarkGrade">—</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="palette-block">
+        <div class="palette-heading"><span>同色系</span><span>点击色块即可应用</span></div>
+        <div class="shade-row" id="shadeRow"></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-password">
+    <div class="tool-panel password-panel">
+      <div class="password-display">
+        <div class="password-display-head">
+          <span class="field-label">生成结果</span>
+          <span class="strength-label" id="passwordStrengthLabel">强</span>
+        </div>
+        <output class="password-output" id="passwordOutput"> </output>
+        <div class="strength-track" id="strengthTrack" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="password-meta">
+          <span id="passwordEntropy">约 0 位熵</span>
+          <span>由浏览器加密随机数生成</span>
+        </div>
+        <div class="password-guidance" aria-label="密码使用建议">
+          <span class="field-label">使用建议</span>
+          <div class="password-guidance-item"><b>01</b><span>重要账户使用独立密码，避免一处泄露影响全部。</span></div>
+          <div class="password-guidance-item"><b>02</b><span>交给可信的密码管理器保存，比记在浏览器外更稳妥。</span></div>
+          <div class="password-guidance-item"><b>03</b><span>这段密码只在本机生成，不会经过任何服务器。</span></div>
+        </div>
+        <div class="password-actions">
+          <button class="btn primary" type="button" id="passwordCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制密码</button>
+          <button class="btn" type="button" id="passwordBatch"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>5 个并复制</button>
+          <button class="btn" type="button" id="passwordRefresh"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>换一个</button>
+        </div>
+      </div>
+      <div class="password-controls">
+        <div class="length-control">
+          <div class="slider-label"><label for="passwordLength">长度</label><output id="passwordLengthValue">20</output></div>
+          <input class="range" id="passwordLength" type="range" min="6" max="64" value="20" aria-label="密码长度">
+          <div class="range-ends"><span>6</span><span>64</span></div>
+        </div>
+        <fieldset class="option-set">
+          <legend class="field-label">包含字符</legend>
+          <label class="switch-row"><span><b>小写字母</b><small>a–z</small></span><span class="switch"><input type="checkbox" id="pwLower" checked><i></i></span></label>
+          <label class="switch-row"><span><b>大写字母</b><small>A–Z</small></span><span class="switch"><input type="checkbox" id="pwUpper" checked><i></i></span></label>
+          <label class="switch-row"><span><b>数字</b><small>0–9</small></span><span class="switch"><input type="checkbox" id="pwDigits" checked><i></i></span></label>
+          <label class="switch-row"><span><b>符号</b><small>! @ # $ %</small></span><span class="switch"><input type="checkbox" id="pwSymbols" checked><i></i></span></label>
+          <label class="switch-row"><span><b>排除易混淆</b><small>0 O 1 l I</small></span><span class="switch"><input type="checkbox" id="pwAvoid"><i></i></span></label>
+        </fieldset>
+      </div>
+    </div>
+  </template>
+
+  <!--
+    单位工具：同一面板内放两套视图（换算 / 计算器）。
+    换算由 unit.js 建立数据与分类；模式切换、手机分类下拉和计算器由
+    unit-advanced.js 接管。两者通过 #unitModeSwitch 的 data 状态通信。
+  -->
+  <template id="tpl-unit">
+    <div class="tool-panel unit-panel">
+      <div class="unit-mode-bar">
+        <div class="segmented unit-mode-switch" id="unitModeSwitch" role="tablist" aria-label="工具模式">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-unit-mode="convert">单位换算</button>
+          <button type="button" role="tab" aria-selected="false" data-unit-mode="calc">高级计算器</button>
+        </div>
+        <span class="unit-mode-note" id="unitModeNote">16 类单位 · 本地即时换算</span>
+      </div>
+
+      <div class="unit-convert-view" id="unitConvertView">
+        <div class="unit-category-row">
+          <div class="category-tabs unit-categories" id="unitCategories" role="tablist" aria-label="换算类别"></div>
+          <label class="unit-category-mobile">
+            <span class="unit-mobile-label">换算类别</span>
+            <span class="select-wrap">
+              <select id="unitCategorySelect" class="field-control" aria-label="换算类别"></select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </span>
+          </label>
+        </div>
+
+        <div class="unit-converter">
+          <div class="unit-side">
+            <div class="unit-side-head">
+              <span class="field-label">从</span>
+              <span class="unit-side-hint">输入数值</span>
+            </div>
+            <input class="unit-value" id="unitFromValue" type="number" inputmode="decimal" value="1" step="any" aria-label="要换算的数值">
+            <div class="select-wrap unit-select-wrap">
+              <select id="unitFromSelect" class="field-control" aria-label="源单位"></select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </div>
+          </div>
+          <button class="unit-swap" type="button" id="unitSwap" aria-label="交换单位">
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow-swap"/></svg>
+          </button>
+          <div class="unit-side result-side">
+            <div class="unit-side-head">
+              <span class="field-label">到</span>
+              <button class="unit-result-copy" type="button" id="unitCopyInline" aria-label="复制换算结果">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+              </button>
+            </div>
+            <input class="unit-value result-value" id="unitToValue" type="text" readonly aria-label="换算结果" aria-live="polite">
+            <div class="select-wrap unit-select-wrap">
+              <select id="unitToSelect" class="field-control" aria-label="目标单位"></select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="unit-lower">
+          <div class="formula-card unit-formula-card">
+            <div class="mini-head"><span>换算关系</span><span class="mini-count">基准换算</span></div>
+            <p id="unitFormula">1 米 = 100 厘米</p>
+          </div>
+          <div class="common-block unit-reference-card">
+            <div class="mini-head"><span>常用参考</span><span class="mini-count">点击切换目标单位</span></div>
+            <div class="unit-reference-grid" id="unitCommon"></div>
+          </div>
+        </div>
+
+        <div class="unit-actions">
+          <label class="unit-precision"><span>结果小数位</span><span class="select-wrap"><select id="unitPrecision" class="field-control" aria-label="结果小数位"><option value="auto" selected>自动</option><option value="2">2 位</option><option value="4">4 位</option><option value="6">6 位</option><option value="8">8 位</option></select><svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg></span></label>
+          <button class="btn unit-copy-btn" type="button" id="unitCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制结果</button>
+        </div>
+      </div>
+
+      <div class="unit-calc-view" id="unitCalcView" hidden>
+        <div class="calc-layout">
+          <section class="calc-card" aria-label="高级计算器">
+            <div class="calc-topbar">
+              <span class="calc-kicker">SCIENTIFIC · LOCAL</span>
+              <div class="calc-top-actions">
+                <span class="calc-memory-badge" id="calcMemoryBadge" hidden>M</span>
+                <button class="calc-angle" type="button" id="calcAngleToggle" aria-label="切换角度模式">DEG</button>
+              </div>
+            </div>
+            <div class="calc-display">
+              <div class="calc-display-meta"><span>表达式</span><span id="calcAngleLabel">角度 DEG</span></div>
+              <input class="calc-input" id="calcInput" type="text" inputmode="none" spellcheck="false" autocomplete="off" aria-label="计算表达式" placeholder="0">
+              <div class="calc-preview-line"><span id="calcPreview">输入表达式开始计算</span></div>
+              <div class="calc-result-line">
+                <output class="calc-output" id="calcResult" aria-live="polite">0</output>
+                <button class="calc-result-copy" type="button" id="calcCopyResult" aria-label="复制计算结果"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+              </div>
+            </div>
+
+            <div class="calc-memory-row" role="group" aria-label="计算器记忆">
+              <button class="calc-memory" type="button" data-calc-memory="clear">MC</button>
+              <button class="calc-memory" type="button" data-calc-memory="recall">MR</button>
+              <button class="calc-memory" type="button" data-calc-memory="add">M+</button>
+              <button class="calc-memory" type="button" data-calc-memory="subtract">M−</button>
+              <button class="calc-memory" type="button" data-calc-memory="store">MS</button>
+            </div>
+
+            <div class="calc-sci-grid" aria-label="科学函数">
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="sin(">sin</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="cos(">cos</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="tan(">tan</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="ln(">ln</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="log(">log</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="sqrt(">√</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="^2">x²</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="^">xʸ</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="pi">π</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="e">e</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="!">x!</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="abs(">|x|</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="(">(</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert=")">)</button>
+              <button class="calc-key calc-key-sci" type="button" data-calc-insert="ans">Ans</button>
+            </div>
+
+            <div class="calc-main-grid" aria-label="数字键盘">
+              <button class="calc-key calc-key-utility" type="button" data-calc-action="clear">C</button>
+              <button class="calc-key calc-key-utility" type="button" data-calc-action="backspace" aria-label="退格">⌫</button>
+              <button class="calc-key calc-key-utility" type="button" data-calc-insert="%">%</button>
+              <button class="calc-key calc-key-op" type="button" data-calc-insert="/">÷</button>
+              <button class="calc-key" type="button" data-calc-insert="7">7</button>
+              <button class="calc-key" type="button" data-calc-insert="8">8</button>
+              <button class="calc-key" type="button" data-calc-insert="9">9</button>
+              <button class="calc-key calc-key-op" type="button" data-calc-insert="*">×</button>
+              <button class="calc-key" type="button" data-calc-insert="4">4</button>
+              <button class="calc-key" type="button" data-calc-insert="5">5</button>
+              <button class="calc-key" type="button" data-calc-insert="6">6</button>
+              <button class="calc-key calc-key-op" type="button" data-calc-insert="-">−</button>
+              <button class="calc-key" type="button" data-calc-insert="1">1</button>
+              <button class="calc-key" type="button" data-calc-insert="2">2</button>
+              <button class="calc-key" type="button" data-calc-insert="3">3</button>
+              <button class="calc-key calc-key-op" type="button" data-calc-insert="+">+</button>
+              <button class="calc-key calc-key-utility" type="button" data-calc-action="negate">±</button>
+              <button class="calc-key" type="button" data-calc-insert="0">0</button>
+              <button class="calc-key" type="button" data-calc-insert=".">.</button>
+              <button class="calc-key calc-key-equals" type="button" data-calc-action="equals">=</button>
+            </div>
+          </section>
+
+          <aside class="calc-side">
+            <section class="calc-history-card">
+              <div class="mini-head"><span>计算历史</span><button class="mini-link" type="button" id="calcHistoryClear">清空</button></div>
+              <div class="calc-history-list" id="calcHistoryList"></div>
+            </section>
+            <div class="calc-hint">
+              <p>支持键盘输入、括号、括号省略乘号、百分比与阶乘。按 Enter 计算，Esc 清空。</p>
+              <p>全部在本地运算，不上传表达式与历史。</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-timestamp">
+    <div class="tool-panel timestamp-panel">
+      <section class="now-card">
+        <div class="now-copy">
+          <span class="field-label"><span class="live-dot"></span>此刻 · 本地时间</span>
+          <strong class="now-clock" data-now-clock>--:--</strong>
+          <span class="now-date" data-now-date>今天</span>
+        </div>
+        <div class="now-epoch">
+          <span class="field-label">Unix 时间戳</span>
+          <div class="epoch-line"><strong data-now-seconds>0</strong><span>秒</span><button class="icon-button soft" type="button" id="copyNowSeconds" aria-label="复制当前秒级时间戳"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+          <div class="epoch-line muted"><code data-now-ms>0</code><span>毫秒</span><button class="icon-button soft" type="button" id="copyNowMs" aria-label="复制当前毫秒时间戳"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+          <span class="timezone-label" data-tz>UTC+08:00</span>
+        </div>
+      </section>
+      <div class="ts-grid">
+        <section class="ts-card">
+          <div class="ts-card-head"><h3>时间戳 → 日期</h3><button class="mini-link" type="button" id="tsNow">填为当前时间</button></div>
+          <label class="field-label" for="tsInput">Unix 时间戳</label>
+          <input class="field-control mono-input" id="tsInput" type="text" inputmode="numeric" value="" placeholder="秒或毫秒，均可自动识别" spellcheck="false">
+          <p class="field-note" id="tsDetected">自动识别秒 / 毫秒</p>
+          <div class="result-list" id="tsResults">
+            <div class="result-row"><span>本地时间</span><code id="tsLocal">—</code><button class="row-copy" type="button" data-copy-of="tsLocal" aria-label="复制本地时间"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+            <div class="result-row"><span>UTC</span><code id="tsUtc">—</code><button class="row-copy" type="button" data-copy-of="tsUtc" aria-label="复制 UTC 时间"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+            <div class="result-row"><span>ISO 8601</span><code id="tsIso">—</code><button class="row-copy" type="button" data-copy-of="tsIso" aria-label="复制 ISO 时间"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+            <div class="result-row"><span>相对现在</span><code id="tsRelative">—</code><button class="row-copy" type="button" data-copy-of="tsRelative" aria-label="复制相对时间"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+          </div>
+        </section>
+        <section class="ts-card">
+          <div class="ts-card-head"><h3>日期 → 时间戳</h3><button class="mini-link" type="button" id="dtNow">填为现在</button></div>
+          <label class="field-label" for="dtInput">本地日期与时间</label>
+          <input class="field-control" id="dtInput" type="datetime-local" step="1">
+          <p class="field-note">按当前时区解释，精确到秒。</p>
+          <div class="result-list">
+            <div class="result-row"><span>秒</span><code id="dtSeconds">—</code><button class="row-copy" type="button" data-copy-of="dtSeconds" aria-label="复制秒级时间戳"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+            <div class="result-row"><span>毫秒</span><code id="dtMs">—</code><button class="row-copy" type="button" data-copy-of="dtMs" aria-label="复制毫秒时间戳"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-image">
+    <div class="tool-panel image-panel">
+      <input type="file" id="imageFile" accept="image/*" hidden>
+      <div class="dropzone" id="imageDrop">
+        <span class="dropzone-icon"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg></span>
+        <h3>把图片拖到这里</h3>
+        <p>或从设备中选择一张图片。支持 JPEG、PNG、WebP，最大 30 MB。</p>
+        <button class="btn primary" type="button" id="imagePick"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>选择图片</button>
+        <span class="dropzone-foot"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>图片只在你的浏览器中处理</span>
+        <div class="dropzone-features" aria-label="图片压缩能力">
+          <span>WebP / JPEG / PNG</span>
+          <span>尺寸与画质可调</span>
+          <span>单张最大 30 MB</span>
+        </div>
+      </div>
+      <div class="image-workbench" id="imageWorkbench" hidden>
+        <div class="image-preview-column">
+          <div class="image-preview-frame">
+            <img id="imagePreview" alt="待处理的图片预览">
+            <span class="preview-badge" id="imagePreviewBadge">预览</span>
+          </div>
+          <div class="image-file-meta">
+            <span class="file-dot"></span>
+            <span id="imageFileName">image.jpg</span>
+            <span id="imageFileMeta">0 KB</span>
+          </div>
+        </div>
+        <div class="image-controls">
+          <div class="control-group">
+            <span class="field-label">输出格式</span>
+            <div class="segmented" id="imageFormats" role="group" aria-label="输出格式">
+              <button class="is-active" type="button" data-format="webp">WebP</button>
+              <button type="button" data-format="jpeg">JPEG</button>
+              <button type="button" data-format="png">PNG</button>
+            </div>
+          </div>
+          <div class="slider-block compact">
+            <div class="slider-label"><label for="imageQuality">画质</label><span><strong id="imageQualityValue">82</strong>%</span></div>
+            <input class="range" id="imageQuality" type="range" min="20" max="100" value="82" aria-label="输出画质">
+          </div>
+          <div class="inline-fields">
+            <div class="field-block">
+              <label class="field-label" for="imageWidth">最大宽度</label>
+              <div class="input-suffix"><input class="field-control" id="imageWidth" type="number" min="64" max="8192" step="1" value="1920"><span>px</span></div>
+            </div>
+            <div class="field-block">
+              <span class="field-label">原图尺寸</span>
+              <div class="readonly-field" id="imageOriginalDims">—</div>
+            </div>
+          </div>
+          <div class="image-size-presets" id="imagePresets" role="group" aria-label="常用输出宽度">
+            <button class="tool-action" type="button" data-image-width="640">640</button>
+            <button class="tool-action" type="button" data-image-width="1280">1280</button>
+            <button class="tool-action" type="button" data-image-width="1920">1920</button>
+            <button class="tool-action" type="button" data-image-width="2560">2560</button>
+          </div>
+          <div class="compression-result">
+            <div><span class="field-label">压缩后</span><strong id="imageResultSize">—</strong></div>
+            <div class="saving-pill" id="imageSaving">—</div>
+          </div>
+          <div class="image-progress" id="imageProgress" hidden><span></span></div>
+          <div class="image-actions">
+            <button class="btn primary" type="button" id="imageDownload" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载图片</button>
+            <button class="btn" type="button" id="imageReplace">换一张</button>
+          </div>
+          <p class="image-note" id="imageNote">调整参数后会立即重新生成。</p>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!--
+    文本工作台：左侧 A4 文档 + 右侧查找/导出侧栏。
+    编辑器是 contenteditable，格式按钮依赖 execCommand；
+    DOCX 导出由 text.js 手写 OOXML + ZIP store，不加载外部库。
+  -->
+  <template id="tpl-text">
+    <div class="tool-panel text-panel doc-panel">
+      <div class="stats-strip doc-stats">
+        <div class="stat"><strong id="statChars">0</strong><span>字符</span></div>
+        <div class="stat"><strong id="statWords">0</strong><span>词语</span></div>
+        <div class="stat"><strong id="statParagraphs">0</strong><span>段落</span></div>
+        <div class="stat"><strong id="statPages">1</strong><span>页数</span></div>
+        <div class="stat"><strong id="statRead">0</strong><span>阅读分钟</span></div>
+      </div>
+      <div class="text-metrics doc-metrics">
+        <span id="textSentences">0 句</span>
+        <span id="textLines">0 行</span>
+        <span id="textCjk">0 中文字</span>
+        <span id="textUnique">0 个不同字符</span>
+        <span id="textBytes">0 B</span>
+        <span id="textLimit" title="文档最多 200,000 字符">0 / 200,000</span>
+      </div>
+      <div class="text-grid doc-grid">
+        <section class="text-editor-card doc-editor-card" aria-label="文档编辑器">
+          <div class="doc-toolbar" role="toolbar" aria-label="文档格式工具">
+            <div class="doc-toolbar-row">
+              <select class="doc-select doc-style-select" id="docStyle" aria-label="段落样式">
+                <option value="p">正文</option>
+                <option value="h1">标题 1</option>
+                <option value="h2">标题 2</option>
+                <option value="h3">标题 3</option>
+                <option value="blockquote">引用</option>
+              </select>
+              <select class="doc-select doc-font-select" id="docFont" aria-label="字体">
+                <option value="">默认字体</option>
+                <option value="SimSun">宋体</option>
+                <option value="KaiTi">楷体</option>
+                <option value="FangSong">仿宋</option>
+                <option value="Microsoft YaHei">微软雅黑</option>
+                <option value="PingFang SC">苹方</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times</option>
+                <option value="Arial">Arial</option>
+                <option value="Consolas">Consolas</option>
+              </select>
+              <select class="doc-select doc-size-select" id="docSize" aria-label="字号">
+                <option value="12">12</option>
+                <option value="14">14</option>
+                <option value="15" selected>15</option>
+                <option value="16">16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+              </select>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <div class="doc-tool-group">
+                <button class="doc-tool" type="button" data-doc-command="bold" aria-label="加粗" title="加粗 · Ctrl+B"><b>B</b></button>
+                <button class="doc-tool" type="button" data-doc-command="italic" aria-label="斜体" title="斜体 · Ctrl+I"><i>I</i></button>
+                <button class="doc-tool" type="button" data-doc-command="underline" aria-label="下划线" title="下划线 · Ctrl+U"><span class="doc-u">U</span></button>
+                <button class="doc-tool" type="button" data-doc-command="strikeThrough" aria-label="删除线" title="删除线"><span class="doc-s">S</span></button>
+              </div>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <div class="doc-tool-group" data-doc-group="align">
+                <button class="doc-tool" type="button" data-doc-command="justifyLeft" aria-label="左对齐" title="左对齐">
+                  <svg class="doc-tool-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M3 9h9M3 14h12"/></svg>
+                </button>
+                <button class="doc-tool" type="button" data-doc-command="justifyCenter" aria-label="居中对齐" title="居中对齐">
+                  <svg class="doc-tool-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M5.5 9h9M4 14h12"/></svg>
+                </button>
+                <button class="doc-tool" type="button" data-doc-command="justifyRight" aria-label="右对齐" title="右对齐">
+                  <svg class="doc-tool-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M8 9h9M5 14h12"/></svg>
+                </button>
+                <button class="doc-tool" type="button" data-doc-command="justifyFull" aria-label="两端对齐" title="两端对齐">
+                  <svg class="doc-tool-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M3 9h14M3 14h14"/></svg>
+                </button>
+              </div>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <div class="doc-tool-group">
+                <button class="doc-tool" type="button" data-doc-command="insertUnorderedList" aria-label="无序列表" title="无序列表"><span class="doc-list-glyph">•</span></button>
+                <button class="doc-tool" type="button" data-doc-command="insertOrderedList" aria-label="有序列表" title="有序列表"><span class="doc-list-glyph doc-list-number">1.</span></button>
+              </div>
+            </div>
+            <div class="doc-toolbar-row">
+              <div class="doc-tool-group">
+                <button class="doc-tool doc-tool-wide" type="button" data-doc-action="quote" aria-label="引用块" title="引用块">“ ”</button>
+                <button class="doc-tool" type="button" data-doc-command="outdent" aria-label="减少缩进" title="减少缩进">←</button>
+                <button class="doc-tool" type="button" data-doc-command="indent" aria-label="增加缩进" title="增加缩进">→</button>
+              </div>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <div class="doc-tool-group">
+                <button class="doc-tool" type="button" data-doc-action="link" aria-label="插入链接" title="插入链接">
+                  <svg class="doc-tool-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M8.2 11.8 11.8 8.2M7 14H5.5a3.5 3.5 0 0 1 0-7H8M13 6h1.5a3.5 3.5 0 0 1 0 7H12"/></svg>
+                </button>
+                <button class="doc-tool" type="button" data-doc-command="insertHorizontalRule" aria-label="分隔线" title="分隔线">—</button>
+                <button class="doc-tool doc-tool-wide" type="button" data-doc-action="clear" aria-label="清除格式" title="清除格式">Tx</button>
+              </div>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <div class="doc-tool-group">
+                <button class="doc-tool" type="button" data-doc-command="undo" aria-label="撤销" title="撤销 · Ctrl+Z">↶</button>
+                <button class="doc-tool" type="button" data-doc-command="redo" aria-label="重做" title="重做 · Ctrl+Shift+Z">↷</button>
+              </div>
+              <span class="doc-tool-sep" aria-hidden="true"></span>
+              <button class="doc-tool doc-tool-text" type="button" data-doc-export="docx" aria-label="导出 Word 文档" title="导出 Word 文档">导出 Word</button>
+            </div>
+          </div>
+          <div class="doc-canvas">
+            <div class="doc-paper-wrap">
+              <article id="docEditor" class="doc-paper" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="文档正文"></article>
+            </div>
+          </div>
+          <div class="doc-statusbar">
+            <div class="doc-status-left">
+              <span class="doc-title" id="docTitleLabel">未命名文档</span>
+              <span class="doc-status-dot" aria-hidden="true"></span>
+              <span id="docSaveStatus">草稿保存在本机</span>
+            </div>
+            <div class="doc-status-actions">
+              <button class="chrome-action" type="button" id="textUndo" hidden><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>撤销处理</span></button>
+              <button class="chrome-action" type="button" id="textCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制全文</span></button>
+              <button class="chrome-action" type="button" id="docReset"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>恢复示例</span></button>
+              <button class="chrome-action" type="button" id="textClear"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg><span>清空</span></button>
+            </div>
+          </div>
+        </section>
+        <aside class="text-tools-card doc-side">
+          <section class="doc-side-card">
+            <div class="mini-head"><span>查找与替换</span><span class="mini-count" id="docFindCount">0 处</span></div>
+            <div class="doc-find-row">
+              <input class="doc-find-input" type="text" id="docFind" placeholder="查找文字…" aria-label="查找文字">
+              <button class="doc-mini-btn" type="button" id="docFindNext">下一个</button>
+            </div>
+            <div class="doc-find-row">
+              <input class="doc-find-input" type="text" id="docReplace" placeholder="替换为…" aria-label="替换为">
+              <button class="doc-mini-btn" type="button" id="docReplaceOne">替换</button>
+              <button class="doc-mini-btn" type="button" id="docReplaceAll">全部</button>
+            </div>
+          </section>
+          <section class="doc-side-card">
+            <div class="mini-head"><span>导出文档</span><span class="mini-count">本地生成</span></div>
+            <div class="doc-export-grid">
+              <button class="btn primary" type="button" data-doc-export="docx">Word (.docx)</button>
+              <button class="btn" type="button" data-doc-export="txt">纯文本 (.txt)</button>
+              <button class="btn" type="button" data-doc-export="html">网页 (.html)</button>
+              <button class="btn" type="button" data-doc-export="print">打印 / PDF</button>
+            </div>
+            <p class="doc-side-note">文件在浏览器内生成，不上传。Word 导出保留标题、段落、字体和基础格式。</p>
+          </section>
+          <section class="doc-side-card">
+            <details class="doc-details">
+              <summary>批量处理文本</summary>
+              <div class="transform-grid">
+                <button class="tool-action" type="button" data-transform="upper">全部大写</button>
+                <button class="tool-action" type="button" data-transform="lower">全部小写</button>
+                <button class="tool-action" type="button" data-transform="trim">清理空白</button>
+                <button class="tool-action" type="button" data-transform="strip">去除换行</button>
+                <button class="tool-action" type="button" data-transform="reverse">反转文字</button>
+                <button class="tool-action" type="button" data-transform="title">英文标题</button>
+                <button class="tool-action" type="button" data-transform="sort">行排序</button>
+                <button class="tool-action" type="button" data-transform="dedupe">去重行</button>
+                <button class="tool-action" type="button" data-transform="number">添加行号</button>
+                <button class="tool-action" type="button" data-transform="empty">去空行</button>
+                <button class="tool-action" type="button" data-transform="slug">URL Slug</button>
+                <button class="tool-action" type="button" data-transform="sentence">句首大写</button>
+                <button class="tool-action" type="button" data-transform="camel">camelCase</button>
+                <button class="tool-action" type="button" data-transform="pascal">PascalCase</button>
+                <button class="tool-action" type="button" data-transform="snake">snake_case</button>
+                <button class="tool-action" type="button" data-transform="kebab">kebab-case</button>
+                <button class="tool-action" type="button" data-transform="constant">CONSTANT</button>
+                <button class="tool-action" type="button" data-transform="emails">提取邮箱</button>
+                <button class="tool-action" type="button" data-transform="urls">提取链接</button>
+                <button class="tool-action" type="button" data-transform="numbers">提取数字</button>
+              </div>
+            </details>
+            <div class="frequency-block">
+              <div class="mini-head"><span>高频字符</span><span class="mini-count">不含空白</span></div>
+              <div class="frequency-list" id="charFrequency"></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-encode">
+    <div class="tool-panel encode-panel">
+      <div class="encode-toolbar">
+        <div class="segmented" id="encodeMode" role="group" aria-label="编码类型">
+          <button type="button" data-mode="base64">Base64</button>
+          <button type="button" data-mode="base32">Base32</button>
+          <button type="button" data-mode="url">URL</button>
+          <button type="button" data-mode="hex">Hex</button>
+            <button type="button" data-mode="html">HTML</button>
+        </div>
+        <div class="segmented" id="encodeDirection" role="group" aria-label="转换方向">
+          <button class="is-active" type="button" data-direction="encode">编码</button>
+          <button type="button" data-direction="decode">解码</button>
+        </div>
+      </div>
+      <div class="encode-grid">
+        <section class="encode-card">
+          <div class="mini-head"><span>输入</span><button class="chrome-action" type="button" id="encodeClear"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span>清空</span></button></div>
+          <textarea id="encodeInput" spellcheck="false" aria-label="编码输入" placeholder="在这里输入文字或链接…"></textarea>
+        </section>
+        <section class="encode-card output">
+          <div class="mini-head"><span>输出</span><button class="chrome-action" type="button" id="encodeCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button></div>
+          <textarea id="encodeOutput" readonly aria-label="编码输出" placeholder="结果会实时出现在这里…"></textarea>
+          <p class="encode-error" id="encodeError" hidden></p>
+        </section>
+      </div>
+      <div class="encode-footer">
+        <div class="encode-hint"><span class="status-dot" id="encodeStatusDot"></span><span id="encodeHint">Unicode 安全 · 实时转换</span></div>
+        <button class="btn small" type="button" id="encodeSwap"><svg class="icon" aria-hidden="true"><use href="#i-arrow-swap"/></svg>交换并反转</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-random">
+    <div class="tool-panel random-panel">
+      <div class="random-grid">
+        <section class="random-list-card">
+          <div class="mini-head"><span>候选名单</span><span class="mini-count" id="randomCount">6 项</span></div>
+          <textarea id="randomInput" spellcheck="false" aria-label="候选名单，每行一项">日式咖喱
+牛肉面
+轻食沙拉
+寿司
+麻辣烫
+意面</textarea>
+          <div class="random-list-foot">
+            <label class="switch-row compact"><span><b>抽中后移出</b><small>不重复抽取</small></span><span class="switch"><input type="checkbox" id="randomRemove"><i></i></span></label>
+            <button class="chrome-action" type="button" id="randomReset"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>恢复示例</span></button>
+          </div>
+        </section>
+        <section class="random-stage" id="randomStage">
+          <div class="random-stage-head">
+            <span class="stage-label">今天，就决定是</span>
+            <label class="random-anim-select"><span>动画</span><select id="randomAnimation" aria-label="抽奖动画">
+              <option value="roulette">滚轮揭晓</option>
+              <option value="slot">老虎机</option>
+              <option value="flip">翻牌揭晓</option>
+              <option value="fireworks">礼花庆典</option>
+              <option value="orbit">星光环绕</option>
+            </select></label>
+          </div>
+          <div class="random-slots" id="randomSlots" hidden aria-hidden="true"></div>
+          <div class="random-fx" id="randomFx" aria-hidden="true"></div>
+          <div class="random-result" id="randomResult">准备好抽一个了吗？</div>
+          <div class="random-actions">
+            <button class="btn primary big" type="button" id="randomDraw"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg>开始抽取</button>
+            <button class="btn" type="button" id="randomCopy" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制结果</button>
+            <button class="chrome-action" type="button" id="randomCoin">抛硬币</button>
+            <button class="chrome-action" type="button" id="randomDice">掷骰子</button>
+          </div>
+          <span class="stage-note"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>加密级随机 · 公平抽选</span>
+          <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-url">
+    <div class="tool-panel url-panel">
+      <section class="url-compose-card">
+        <div class="url-compose-head">
+          <div>
+            <span class="field-label">网址</span>
+            <span class="url-hint">支持 http / https，粘贴后自动解析</span>
+          </div>
+          <button class="mini-link" type="button" id="urlExample">载入示例</button>
+        </div>
+        <div class="url-input-line">
+          <svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>
+          <input id="urlInput" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="要解析的网址" placeholder="https://example.com/path?key=value">
+          <button class="icon-button soft" type="button" id="urlOpen" aria-label="在新标签页打开链接" disabled>
+            <svg class="icon" aria-hidden="true"><use href="#i-external"/></svg>
+          </button>
+        </div>
+        <div class="url-compose-foot">
+          <div class="url-status" id="urlStatus" data-state="idle" aria-live="polite">
+            <span class="status-dot"></span><span id="urlStatusText">粘贴网址后会自动解析</span>
+          </div>
+          <button class="btn small" type="button" id="urlCopy" disabled>
+            <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制整理后的链接
+          </button>
+          <button class="btn small ghost" type="button" id="urlMarkdown" disabled>
+            <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Markdown
+          </button>
+        </div>
+      </section>
+
+      <div class="url-grid">
+        <section class="url-info-card">
+          <div class="mini-head"><span>链接结构</span><span class="url-scheme-pill" id="urlSchemePill">—</span></div>
+          <div class="url-part-list">
+            <div class="url-part"><span>协议</span><code id="urlScheme">—</code></div>
+            <div class="url-part"><span>主机</span><code id="urlHost">—</code></div>
+            <div class="url-part"><span>端口</span><code id="urlPort">—</code></div>
+            <div class="url-part"><span>路径</span><code id="urlPath">—</code></div>
+            <div class="url-part"><span>锚点</span><code id="urlHash">—</code></div>
+          </div>
+          <div class="url-origin-row"><span>Origin</span><code id="urlOrigin">—</code></div>
+        </section>
+
+        <section class="url-params-card">
+          <div class="mini-head"><span>查询参数</span><span class="mini-count" id="urlQueryCount">0 项</span></div>
+          <div class="url-param-tools">
+            <button class="tool-action" type="button" id="urlCleanTracking">清理跟踪参数</button>
+            <button class="tool-action" type="button" id="urlSortParams">按名称排序</button>
+            <button class="tool-action" type="button" id="urlClearParams">清空参数</button>
+          </div>
+          <div class="url-param-list" id="urlParamList"></div>
+          <button class="url-add-param" type="button" id="urlAddParam">
+            <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加参数
+          </button>
+          <div class="url-preview-block">
+            <span class="field-label">整理后的链接</span>
+            <code class="url-preview" id="urlPreview">—</code>
+          </div>
+        </section>
+      </div>
+
+      <p class="url-local-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>解析与整理都在本地完成；只有点击「打开」时才会访问外部网站。</p>
+    </div>
+  </template>
+
+  <template id="tpl-extract">
+    <div class="tool-panel extract-panel">
+      <div class="extract-grid">
+        <section class="extract-input-card">
+          <div class="mini-head"><span>文字或 HTML</span><span class="mini-count" id="extractInputCount">0 字符</span></div>
+          <textarea id="extractInput" spellcheck="false" aria-label="包含链接的文字或 HTML" placeholder="粘贴一段包含网址的文字或网页 HTML…"></textarea>
+          <div class="extract-foot">
+            <label class="switch-row extract-dedupe">
+              <span><b>自动去重</b><small>相同链接只保留一次</small></span>
+              <span class="switch"><input type="checkbox" id="extractDedupe" checked><i></i></span>
+            </label>
+            <div class="extract-mini-actions">
+              <button class="chrome-action" type="button" id="extractExample"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span>示例</span></button>
+              <button class="chrome-action" type="button" id="extractClear"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg><span>清空</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="extract-results-card">
+          <div class="mini-head"><span>提取结果</span><span class="mini-count" id="extractCount">0 个链接</span></div>
+          <div class="extract-filter-line">
+            <label class="extract-filter">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+              <input id="extractFilter" type="search" placeholder="筛选域名或链接…" autocomplete="off" aria-label="筛选已提取的链接">
+            </label>
+            <button class="btn small" type="button" id="extractCopyAll" disabled>
+              <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制结果
+            </button>
+            <button class="btn small ghost" type="button" id="extractDownload" disabled>
+              <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载 .txt
+            </button>
+            <button class="btn small ghost" type="button" id="extractDomains" disabled>复制域名</button>
+          </div>
+          <div class="extract-list" id="extractList" aria-live="polite"></div>
+          <p class="extract-note" id="extractNote">只识别 http(s) 链接，不会访问它们。</p>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <!--
+    站点导航：外层是密码门，解锁后才渲染分类和站点网格。
+    站点 URL 不显示在卡片上（仅整卡可点），锁定时会清空 DOM，
+    以免全局搜索绕过密码门。
+  -->
+  <template id="tpl-sites">
+    <div class="tool-panel sites-panel">
+      <section class="sites-lock" id="sitesLock" hidden>
+        <span class="sites-lock-aura sites-lock-aura-a" aria-hidden="true"></span>
+        <span class="sites-lock-aura sites-lock-aura-b" aria-hidden="true"></span>
+        <div class="sites-lock-card">
+          <span class="sites-lock-icon"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></span>
+          <span class="sites-lock-kicker">PRIVATE SITES</span>
+          <h2>站点导航已锁定</h2>
+          <p>输入访问密码后查看收录的网站。解锁状态只在当前标签页保留。</p>
+          <form class="sites-lock-form" id="sitesLockForm">
+            <label class="sites-password-field" for="sitesPassword">
+              <svg class="icon" aria-hidden="true"><use href="#i-key"/></svg>
+              <input id="sitesPassword" type="password" autocomplete="current-password" spellcheck="false" maxlength="128" placeholder="输入访问密码" aria-describedby="sitesLockError">
+              <button class="sites-password-toggle" type="button" id="sitesPasswordToggle" aria-label="显示密码">显示</button>
+            </label>
+            <p class="sites-lock-error" id="sitesLockError" role="alert" hidden></p>
+            <button class="btn primary sites-unlock-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span class="sites-unlock-label">解锁站点导航</span><span class="sites-unlock-loading" aria-hidden="true"><i></i><i></i><i></i></span></button>
+          </form>
+          <small>密码只在本机校验 · 不上传 · 关闭标签页后重新锁定</small>
+        </div>
+      </section>
+      <div class="sites-toolbar">
+        <label class="sites-search">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="sitesSearch" type="search" placeholder="搜索网站、域名或用途…" autocomplete="off" aria-label="搜索网站">
+        </label>
+        <div class="sites-filter-block">
+          <span class="sites-filter-label">分类</span>
+          <div class="filter-row sites-filters" id="sitesFilters" role="group" aria-label="按分类筛选网站"></div>
+        </div>
+      </div>
+      <div class="sites-meta">
+        <span id="sitesCount">23 个真实网站 · 5 个分类</span>
+        <button class="chrome-action sites-lock-action" type="button" id="sitesLockButton"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span>锁定</span></button>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg>点击将在新标签页打开</span>
+      </div>
+      <div class="sites-grid" id="sitesGrid"></div>
+      <div class="sites-empty" id="sitesEmpty" hidden>
+        <span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-compass"/></svg></span>
+        <h3>没有找到匹配的网站</h3>
+        <p>换个关键词，或者回到「全部」看看。</p>
+      </div>
+      <p class="sites-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>这里只收录真实可访问的网站，不在后台加载它们的图标或脚本；点击时才会离开程宇。</p>
+    </div>
+  </template>
+
+  <template id="tpl-markdown">
+    <div class="tool-panel markdown-panel">
+      <div class="md-grid">
+        <section class="md-editor-card">
+          <div class="mini-head"><span>Markdown</span><span class="mini-count" id="mdCount">0 字符</span></div>
+          <textarea id="mdInput" spellcheck="false" aria-label="Markdown 源文本"># 日常小事，一气呵成
+
+这是一段用 **Markdown** 写下的文字，右侧会实时渲染。
+
+## 可以做什么
+
+- 用清晰的标题整理思路
+- 用 `行内代码` 标注关键词
+- 收藏一个[真实的网站](https://developer.mozilla.org/zh-CN/)
+
+> 好的工具，应该安静地待在手边。
+
+```js
+const toolkit = "程宇";
+console.log(`Hello, ${toolkit}`);
+```
+
+---</textarea>
+          <div class="md-toolbar">
+            <button class="chrome-action" type="button" id="mdSample"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span>示例</span></button>
+            <button class="chrome-action" type="button" id="mdCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制 Markdown</span></button>
+            <button class="chrome-action" type="button" id="mdCopyHtml"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制 HTML</span></button>
+            <button class="chrome-action" type="button" id="mdDownloadHtml"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>导出 HTML</span></button>
+            <button class="chrome-action" type="button" id="mdDownload"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>导出 .md</span></button>
+            <button class="chrome-action" type="button" id="mdClear"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg><span>清空</span></button>
+            <span class="md-note">不执行原始 HTML</span>
+          </div>
+        </section>
+        <section class="md-preview-card">
+          <div class="mini-head"><span>预览</span><span class="md-live"><span class="status-dot"></span>实时渲染</span></div>
+          <article class="markdown-preview" id="mdPreview"></article>
+        </section>
+      </div>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>支持标题、粗体、斜体、链接、列表、引用、代码块和分割线 · 所有内容仅在本地渲染</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-csv">
+    <div class="tool-panel csv-panel">
+      <div class="csv-toolbar">
+        <div class="segmented" id="csvMode" role="group" aria-label="转换方向">
+          <button class="is-active" type="button" data-csv-mode="csv2json">CSV → JSON</button>
+          <button type="button" data-csv-mode="json2csv">JSON → CSV</button>
+        </div>
+        <div class="csv-options">
+          <label class="csv-check"><input type="checkbox" id="csvHeader" checked> 首行作为字段名</label>
+          <label class="csv-check">分隔符
+            <select id="csvDelimiter" class="csv-select" aria-label="CSV 分隔符">
+              <option value="auto">自动识别</option>
+              <option value=",">逗号</option>
+              <option value="&#9;">Tab</option>
+              <option value=";">分号</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="csv-grid">
+        <section class="code-card csv-input-card" aria-labelledby="csvInputLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="csvInputLabel">data.csv</span>
+            <span class="status-pill is-valid" id="csvStatus"><span class="status-dot"></span>就绪</span>
+          </div>
+          <textarea id="csvInput" class="code-area" spellcheck="false" aria-label="CSV 或 JSON 输入" placeholder="粘贴 CSV 或 JSON…"></textarea>
+          <p class="inline-error" id="csvError" hidden></p>
+          <div class="code-actions">
+            <button class="btn small primary" type="button" id="csvConvert"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>转换</button>
+            <button class="btn small ghost" type="button" id="csvSample">示例</button>
+            <button class="btn small ghost" type="button" id="csvMarkdown">Markdown 表格</button>
+            <button class="btn small ghost" type="button" id="csvClear">清空</button>
+          </div>
+        </section>
+        <section class="code-card output-card csv-output-card" aria-labelledby="csvOutputLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights muted" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="csvOutputLabel">output.json</span>
+            <button class="chrome-action" type="button" id="csvCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button>
+          </div>
+          <pre class="code-output csv-output" tabindex="0" aria-label="转换结果"><code id="csvOutput"></code></pre>
+          <div class="code-stats">
+            <span id="csvStat">等待输入</span>
+            <span class="grow"></span>
+            <button class="chrome-action" type="button" id="csvDownload"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>下载</span></button>
+          </div>
+        </section>
+      </div>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>支持引号、换行和转义双引号 · 转换与下载都在本地完成</span>
+        <kbd><span data-mod>⌘</span> ↵</kbd><span>转换</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-diff">
+    <div class="tool-panel diff-panel">
+      <div class="diff-input-grid">
+        <section class="code-card diff-input-card" aria-labelledby="diffLeftLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="diffLeftLabel">original.txt</span>
+          </div>
+          <textarea id="diffLeft" class="code-area" spellcheck="false" aria-label="原文"></textarea>
+        </section>
+        <section class="code-card diff-input-card" aria-labelledby="diffRightLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights muted" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="diffRightLabel">revision.txt</span>
+          </div>
+          <textarea id="diffRight" class="code-area" spellcheck="false" aria-label="修改后的文本"></textarea>
+        </section>
+      </div>
+      <div class="diff-toolbar">
+        <button class="btn small primary" type="button" id="diffRun"><svg class="icon" aria-hidden="true"><use href="#i-diff"/></svg>开始对比</button>
+        <button class="btn small ghost" type="button" id="diffSwap">交换</button>
+        <button class="btn small ghost" type="button" id="diffClear">清空</button>
+        <label class="diff-option"><input type="checkbox" id="diffIgnoreCase"> 忽略大小写</label>
+        <label class="diff-option"><input type="checkbox" id="diffIgnoreSpace"> 忽略空白</label>
+        <span class="diff-summary" id="diffSummary">逐行比较</span>
+        <span class="grow"></span>
+        <button class="chrome-action" type="button" id="diffCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制差异</span></button>
+      </div>
+      <section class="diff-output-card" aria-label="对比结果">
+        <div class="diff-output-head">
+          <span><i class="diff-legend add"></i>新增</span>
+          <span><i class="diff-legend remove"></i>删除</span>
+          <span><i class="diff-legend same"></i>未变化</span>
+          <span class="grow"></span>
+          <span id="diffOutputStat">等待对比</span>
+        </div>
+        <div class="diff-output" id="diffOutput"></div>
+      </section>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>按行比较，最多处理 1000 行 · 内容只在当前页面内计算</span>
+        <kbd><span data-mod>⌘</span> ↵</kbd><span>比较</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-jwt">
+    <div class="tool-panel jwt-panel">
+      <section class="jwt-input-card">
+        <div class="jwt-input-head">
+          <label class="field-label" for="jwtInput">JWT Token</label>
+          <span class="jwt-note">仅在浏览器内解码，不验证签名</span>
+        </div>
+        <textarea id="jwtInput" class="field-control jwt-input" spellcheck="false" aria-label="JWT Token" placeholder="粘贴 JWT，例如 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"></textarea>
+        <div class="jwt-actions">
+          <button class="btn small primary" type="button" id="jwtDecode"><svg class="icon" aria-hidden="true"><use href="#i-token"/></svg>解码</button>
+          <button class="btn small ghost" type="button" id="jwtSample">示例</button>
+          <button class="btn small ghost" type="button" id="jwtClear">清空</button>
+          <span class="jwt-status" id="jwtStatus">等待输入</span>
+        </div>
+      </section>
+      <div class="jwt-grid">
+        <section class="code-card jwt-code-card" aria-labelledby="jwtHeaderLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="jwtHeaderLabel">header.json</span>
+            <button class="chrome-action" type="button" id="jwtCopyHeader"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button>
+          </div>
+          <pre class="code-output jwt-output" tabindex="0"><code id="jwtHeader"></code></pre>
+        </section>
+        <section class="code-card jwt-code-card" aria-labelledby="jwtPayloadLabel">
+          <div class="code-chrome">
+            <span class="traffic-lights muted" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="code-file" id="jwtPayloadLabel">payload.json</span>
+            <button class="chrome-action" type="button" id="jwtCopyPayload"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button>
+          </div>
+          <pre class="code-output jwt-output" tabindex="0"><code id="jwtPayload"></code></pre>
+        </section>
+      </div>
+      <div class="jwt-meta" id="jwtMeta"></div>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>支持 HS256 / RS256 / ES256 等标准 JWT 结构 · 签名只展示，不做验证</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-imagepalette">
+    <div class="tool-panel imagepalette-panel">
+      <div class="imagepalette-grid">
+        <section class="imagepalette-source-card">
+          <label class="imagepalette-drop" id="paletteDrop" for="paletteImageInput">
+            <input id="paletteImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <span class="imagepalette-drop-icon"><svg class="icon" aria-hidden="true"><use href="#i-swatch"/></svg></span>
+            <strong>拖入一张图片</strong>
+            <small>PNG / JPEG / WebP · 本地提取</small>
+          </label>
+          <img class="imagepalette-preview" id="palettePreview" alt="待提取色板的图片" hidden>
+          <div class="imagepalette-source-actions">
+            <button class="btn small ghost" type="button" id="paletteSample">示例图片</button>
+            <button class="btn small ghost" type="button" id="paletteClear">清空</button>
+            <span class="imagepalette-status" id="paletteStatus">等待图片</span>
+          </div>
+        </section>
+        <section class="imagepalette-result-card">
+          <div class="imagepalette-dominant">
+            <span>主色</span>
+            <strong id="paletteDominant">—</strong>
+            <i id="paletteDominantSwatch" aria-hidden="true"></i>
+          </div>
+          <div class="imagepalette-swatches" id="paletteSwatches"></div>
+          <div class="imagepalette-result-actions">
+            <button class="btn small primary" type="button" id="paletteCopy" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>复制色板</button>
+            <button class="btn small ghost" type="button" id="paletteCss" disabled>CSS 变量</button>
+            <button class="btn small ghost" type="button" id="paletteJson" disabled>JSON</button>
+            <span class="imagepalette-hint">点击任一色块复制色值</span>
+          </div>
+        </section>
+      </div>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>使用 Canvas 在本地采样，图片不会上传 · 色板灵感来自 Color Thief</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-cron">
+    <div class="tool-panel cron-panel">
+      <section class="cron-input-card">
+        <div class="cron-label-row">
+          <label class="field-label" for="cronInput">五段 Cron 表达式</label>
+          <span class="cron-zone" id="cronZone">本地时区</span>
+        </div>
+        <div class="cron-input-line">
+          <span class="cron-slash">/</span>
+          <input id="cronInput" type="text" spellcheck="false" autocomplete="off" value="*/15 9-18 * * 1-5" aria-label="Cron 表达式">
+          <span class="cron-slash">/</span>
+          <button class="btn small primary" type="button" id="cronRun"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>解析</button>
+        </div>
+        <div class="cron-examples" role="group" aria-label="Cron 示例">
+          <button type="button" data-cron-example="*/15 9-18 * * 1-5">工作日每 15 分钟</button>
+          <button type="button" data-cron-example="0 9 * * 1-5">工作日 09:00</button>
+          <button type="button" data-cron-example="0 0 1 * *">每月 1 号</button>
+        </div>
+        <p class="cron-error" id="cronError" hidden></p>
+      </section>
+      <section class="cron-result-card">
+        <div class="cron-description" id="cronDescription">输入表达式后生成可读描述与下次运行时间。</div>
+        <div class="cron-fields" id="cronFields"></div>
+        <div class="cron-next-head">
+          <span>接下来 10 次运行</span>
+          <small id="cronNextCount"></small>
+          <button class="chrome-action" type="button" id="cronCopy" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制时间</span></button>
+        </div>
+        <ol class="cron-next" id="cronNext"></ol>
+      </section>
+      <div class="tool-tip">
+        <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+        <span>支持 *、列表、范围、步长以及英文月份 / 星期缩写 · 下一次运行按本地时区计算</span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-webstudio">
+    <div class="tool-panel studio-panel">
+      <div class="studio-bar">
+        <div class="segmented" id="webstudioTabs" role="group" aria-label="网页工坊模式">
+          <button class="is-active" type="button" data-studio-tab="playground">代码沙盒</button>
+          <button type="button" data-studio-tab="gradient">CSS 渐变</button>
+          <button type="button" data-studio-tab="meta">Meta / OG</button>
+        </div>
+        <span class="studio-note">沙盒隔离运行 · 不上传代码</span>
+      </div>
+      <section class="studio-pane is-active" data-studio-pane="playground">
+        <div class="playground-editors">
+          <section class="code-card">
+            <div class="code-chrome"><span class="code-file">index.html</span></div>
+            <textarea id="playgroundHtml" class="code-area" spellcheck="false" aria-label="HTML"></textarea>
+          </section>
+          <section class="code-card">
+            <div class="code-chrome"><span class="code-file">style.css</span></div>
+            <textarea id="playgroundCss" class="code-area" spellcheck="false" aria-label="CSS"></textarea>
+          </section>
+          <section class="code-card">
+            <div class="code-chrome"><span class="code-file">app.js</span></div>
+            <textarea id="playgroundJs" class="code-area" spellcheck="false" aria-label="JavaScript"></textarea>
+          </section>
+        </div>
+        <div class="playground-frame-wrap">
+          <iframe id="playgroundFrame" title="代码预览" sandbox="allow-scripts allow-modals allow-forms"></iframe>
+        </div>
+        <div class="studio-actions">
+          <button class="btn small primary" type="button" id="playgroundRun">运行预览</button>
+          <button class="btn small ghost" type="button" id="playgroundOpen">新窗口打开</button>
+          <button class="btn small ghost" type="button" id="playgroundDownload">下载 HTML</button>
+          <button class="btn small ghost" type="button" id="playgroundReset">重置示例</button>
+          <span class="studio-status" id="playgroundStatus">沙盒中运行</span>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="gradient" hidden>
+        <div class="gradient-layout">
+          <div class="gradient-preview" id="gradientPreview"></div>
+          <div class="gradient-controls">
+            <div class="field-block">
+              <span class="field-label">类型</span>
+              <div class="segmented" id="gradientType" role="group" aria-label="渐变类型">
+                <button class="is-active" type="button" data-gradient-type="linear">线性</button>
+                <button type="button" data-gradient-type="radial">径向</button>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-block"><label class="field-label" for="gradientA">颜色 A</label><input type="color" id="gradientA" value="#7e8cff"></div>
+              <div class="field-block"><label class="field-label" for="gradientB">颜色 B</label><input type="color" id="gradientB" value="#ffd66b"></div>
+            </div>
+            <div class="field-block" id="gradientAngleBlock">
+              <label class="field-label" for="gradientAngle">角度 <span id="gradientAngleValue">135°</span></label>
+              <input class="range" type="range" id="gradientAngle" min="0" max="360" value="135">
+            </div>
+            <div class="studio-actions">
+              <button class="btn small primary" type="button" id="gradientRandom">随机</button>
+              <button class="btn small ghost" type="button" id="gradientCopy">复制 CSS</button>
+            </div>
+          </div>
+        </div>
+        <pre class="code-output studio-code-output" id="gradientOutput"></pre>
+      </section>
+      <section class="studio-pane" data-studio-pane="meta" hidden>
+        <div class="meta-layout">
+          <div class="meta-fields">
+            <div class="field-block"><label class="field-label" for="metaTitle">标题</label><input class="field-control" id="metaTitle" value="程宇 · Lumen Toolkit"></div>
+            <div class="field-block"><label class="field-label" for="metaDesc">描述</label><textarea class="field-control" id="metaDesc" rows="2">一套在浏览器本地运行的日常工具集。</textarea></div>
+            <div class="field-row">
+              <div class="field-block"><label class="field-label" for="metaUrl">URL</label><input class="field-control" id="metaUrl" value="https://example.com/"></div>
+              <div class="field-block"><label class="field-label" for="metaColor">主题色</label><input type="color" id="metaColor" value="#5b7cfa"></div>
+            </div>
+            <div class="field-block"><label class="field-label" for="metaImage">分享图 URL</label><input class="field-control" id="metaImage" placeholder="https://…/cover.png"></div>
+            <div class="studio-actions"><button class="btn small primary" type="button" id="metaGenerate">生成标签</button><button class="btn small ghost" type="button" id="metaCopy">复制</button></div>
+          </div>
+          <pre class="code-output studio-code-output" id="metaOutput"></pre>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <template id="tpl-media">
+    <div class="tool-panel studio-panel">
+      <div class="studio-bar">
+        <div class="segmented" id="mediaTabs" role="group" aria-label="媒体工坊模式">
+          <button class="is-active" type="button" data-studio-tab="audio">录音</button>
+          <button type="button" data-studio-tab="screen">录屏</button>
+          <button type="button" data-studio-tab="camera">摄像头</button>
+          <button type="button" data-studio-tab="speech">文本朗读</button>
+        </div>
+        <span class="studio-note">需要授权设备 · 媒体只留在当前页面</span>
+      </div>
+      <section class="studio-pane is-active" data-studio-pane="audio">
+        <div class="media-card">
+          <div class="media-head">
+            <span class="media-icon"><svg class="icon" aria-hidden="true"><use href="#i-mic"/></svg></span>
+            <span class="media-copy"><strong>麦克风录音</strong><small>本地录音 · 暂停与继续 · 实时电平</small></span>
+            <span class="media-timer" id="audioTimer">00:00</span>
+          </div>
+          <div class="media-options">
+            <label class="field-block"><span class="field-label">麦克风</span><select class="field-control" id="audioDevice"><option value="">默认设备</option></select></label>
+            <label class="field-block"><span class="field-label">格式</span><select class="field-control" id="audioFormat"><option value="audio/webm">WebM</option><option value="audio/mp4">M4A / MP4</option><option value="audio/ogg">OGG</option></select></label>
+          </div>
+          <div class="audio-meter" aria-hidden="true"><i id="audioLevel"></i></div>
+          <div class="studio-actions">
+            <button class="btn small primary" type="button" id="audioStart">开始录音</button>
+            <button class="btn small ghost" type="button" id="audioPause" disabled>暂停</button>
+            <button class="btn small ghost" type="button" id="audioStop" disabled>停止</button>
+            <span class="studio-status" id="audioStatus">未开始</span>
+          </div>
+          <audio id="audioPlayback" controls hidden></audio>
+          <a class="btn small ghost" id="audioDownload" hidden download="lumen-recording.webm">下载录音</a>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="screen" hidden>
+        <div class="media-card">
+          <div class="media-head">
+            <span class="media-copy"><strong>屏幕录制</strong><small>选择窗口或整个屏幕 · 可选系统声音</small></span>
+            <span class="media-timer" id="screenTimer">00:00</span>
+          </div>
+          <div class="media-options">
+            <label class="switch-row media-switch"><span><b>包含系统声音</b><small>取决于浏览器与共享源</small></span><span class="switch"><input type="checkbox" id="screenAudio" checked><i></i></span></label>
+          </div>
+          <div class="studio-actions">
+            <button class="btn small primary" type="button" id="screenStart">开始录屏</button>
+            <button class="btn small ghost" type="button" id="screenPause" disabled>暂停</button>
+            <button class="btn small ghost" type="button" id="screenStop" disabled>停止</button>
+            <span class="studio-status" id="screenStatus">未开始</span>
+          </div>
+          <video id="screenPlayback" controls hidden></video>
+          <a class="btn small ghost" id="screenDownload" hidden download="lumen-screen.webm">下载录屏</a>
+          <button class="btn small ghost" type="button" id="screenSnapshot" disabled>截取画面</button>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="camera" hidden>
+        <div class="media-card">
+          <div class="media-head">
+            <span class="media-copy"><strong>摄像头录制</strong><small>视频与麦克风 · 本地处理</small></span>
+            <span class="media-timer" id="cameraTimer">00:00</span>
+          </div>
+          <div class="media-options">
+            <label class="field-block"><span class="field-label">摄像头</span><select class="field-control" id="cameraFacing"><option value="user">前置</option><option value="environment">后置 / 环境</option></select></label>
+          </div>
+          <div class="studio-actions">
+            <button class="btn small primary" type="button" id="cameraStart">开始录制</button>
+            <button class="btn small ghost" type="button" id="cameraPause" disabled>暂停</button>
+            <button class="btn small ghost" type="button" id="cameraStop" disabled>停止</button>
+            <span class="studio-status" id="cameraStatus">未开始</span>
+          </div>
+          <video id="cameraPlayback" controls muted playsinline hidden></video>
+          <a class="btn small ghost" id="cameraDownload" hidden download="lumen-camera.webm">下载视频</a>
+          <button class="btn small ghost" type="button" id="cameraSnapshot" disabled>截取画面</button>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="speech" hidden>
+        <div class="media-card">
+          <div class="media-head">
+            <span class="media-copy"><strong>文本朗读</strong><small>系统语音 · 可调音色、语速、音高与音量</small></span>
+            <span class="media-timer" id="speechCount">0 字</span>
+          </div>
+          <textarea id="speechText" class="field-control" rows="5" aria-label="要朗读的文本">把复杂留给自己，把顺手留给使用者。</textarea>
+          <div class="media-options">
+            <label class="field-block"><span class="field-label">语言</span><select class="field-control" id="speechLanguage"><option value="">全部语言</option></select></label>
+            <label class="field-block"><span class="field-label">声音</span><select class="field-control" id="speechVoice"></select></label>
+          </div>
+          <div class="media-options">
+            <label class="field-block"><span class="field-label">语速 <span id="speechRateValue">1.0×</span></span><input class="range" type="range" id="speechRate" min="0.6" max="1.8" step="0.1" value="1"></label>
+            <label class="field-block"><span class="field-label">音高 <span id="speechPitchValue">1.0</span></span><input class="range" type="range" id="speechPitch" min="0.6" max="1.6" step="0.1" value="1"></label>
+            <label class="field-block"><span class="field-label">音量 <span id="speechVolumeValue">100%</span></span><input class="range" type="range" id="speechVolume" min="0" max="1" step="0.05" value="1"></label>
+          </div>
+          <div class="studio-actions">
+            <button class="btn small primary" type="button" id="speechSpeak">开始朗读</button>
+            <button class="btn small ghost" type="button" id="speechPause" disabled>暂停</button>
+            <button class="btn small ghost" type="button" id="speechStop" disabled>停止</button>
+            <span class="studio-status" id="speechStatus">就绪</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <template id="tpl-data">
+    <div class="tool-panel studio-panel">
+      <div class="studio-bar">
+        <div class="segmented" id="dataTabs" role="group" aria-label="数据工坊模式">
+          <button class="is-active" type="button" data-studio-tab="xml">XML</button>
+          <button type="button" data-studio-tab="gzip">Gzip</button>
+          <button type="button" data-studio-tab="base">进制</button>
+        </div>
+        <span class="studio-note">浏览器本地处理 · 无上传</span>
+      </div>
+      <section class="studio-pane is-active" data-studio-pane="xml">
+        <div class="data-grid">
+          <section class="code-card"><div class="code-chrome"><span class="code-file">input.xml</span></div><textarea id="xmlInput" class="code-area" spellcheck="false" aria-label="XML 输入">&lt;library&gt;&lt;book id="1"&gt;&lt;title&gt;本地优先&lt;/title&gt;&lt;author&gt;程宇&lt;/author&gt;&lt;/book&gt;&lt;/library&gt;</textarea></section>
+          <section class="code-card"><div class="code-chrome"><span class="code-file">formatted.xml</span><button class="chrome-action" id="xmlCopy">复制</button></div><pre class="code-output"><code id="xmlOutput"></code></pre></section>
+        </div>
+        <div class="studio-actions"><button class="btn small primary" type="button" id="xmlFormat">格式化</button><button class="btn small ghost" type="button" id="xmlToJson">转 JSON</button><span class="studio-status" id="xmlStatus">等待输入</span></div>
+      </section>
+      <section class="studio-pane" data-studio-pane="gzip" hidden>
+        <div class="gzip-grid">
+          <section class="code-card"><div class="code-chrome"><span class="code-file">plain.txt</span></div><textarea id="gzipInput" class="code-area" spellcheck="false" aria-label="压缩文本"></textarea></section>
+          <div class="media-card">
+            <div class="studio-actions"><button class="btn small primary" type="button" id="gzipCompress">压缩并下载 .gz</button><label class="btn small ghost">解压 .gz<input type="file" id="gzipFile" accept=".gz,application/gzip" hidden></label><span class="studio-status" id="gzipStatus">等待操作</span></div>
+            <pre class="code-output studio-code-output" id="gzipOutput">支持 Gzip 压缩文本或解压文件。</pre>
+          </div>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="base" hidden>
+        <div class="field-row base-controls">
+          <div class="field-block"><label class="field-label" for="baseInput">数值</label><input class="field-control" id="baseInput" value="255" spellcheck="false"></div>
+          <div class="field-block"><label class="field-label" for="baseFrom">输入进制</label><select class="field-control" id="baseFrom"><option value="10">十进制</option><option value="2">二进制</option><option value="8">八进制</option><option value="16">十六进制</option></select></div>
+        </div>
+        <div class="base-results" id="baseResults"></div>
+        <div class="studio-actions"><button class="btn small primary" type="button" id="baseConvert">转换</button><span class="studio-status" id="baseStatus">输入后转换</span></div>
+      </section>
+    </div>
+  </template>
+
+  <template id="tpl-favicon">
+    <div class="tool-panel favicon-panel">
+      <div class="favicon-grid">
+        <section class="favicon-source-card">
+          <label class="imagepalette-drop" id="faviconDrop" for="faviconFile">
+            <input id="faviconFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+            <span class="imagepalette-drop-icon"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg></span>
+            <strong>选择一张方形图片</strong><small>PNG / JPEG / WebP / SVG · 自动居中裁切</small>
+          </label>
+          <img class="imagepalette-preview" id="faviconPreview" alt="源图片" hidden>
+          <div class="field-row">
+            <div class="field-block"><label class="field-label" for="faviconPadding">留白 <span id="faviconPaddingValue">8%</span></label><input class="range" type="range" id="faviconPadding" min="0" max="28" value="8"></div>
+            <div class="field-block"><label class="field-label" for="faviconBg">背景</label><input type="color" id="faviconBg" value="#ffffff"></div>
+          </div>
+          <div class="studio-actions"><button class="btn small primary" type="button" id="faviconGenerate">生成图标</button><button class="btn small ghost" type="button" id="faviconSnippet" disabled>复制站点代码</button><span class="studio-status" id="faviconStatus">等待图片</span></div>
+        </section>
+        <section class="favicon-result-card">
+          <div class="favicon-sizes" id="faviconSizes"></div>
+        </section>
+      </div>
+      <div class="tool-tip"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span>生成 16 / 32 / 48 / 180 / 192 / 512 px PNG，全部在 Canvas 中完成</span></div>
+    </div>
+  </template>
+
+  <template id="tpl-life">
+    <div class="tool-panel studio-panel">
+      <div class="studio-bar">
+        <div class="segmented" id="lifeTabs" role="group" aria-label="生活计算器模式">
+          <button class="is-active" type="button" data-studio-tab="loan">贷款</button>
+          <button type="button" data-studio-tab="bmi">BMI</button>
+          <button type="button" data-studio-tab="tip">小费</button>
+          <button type="button" data-studio-tab="timezone">时区</button>
+          <button type="button" data-studio-tab="compound">复利</button>
+        </div>
+        <span class="studio-note">即时计算 · 结果仅供参考</span>
+      </div>
+      <section class="studio-pane is-active" data-studio-pane="loan">
+        <div class="calc-grid">
+          <div class="calc-fields">
+            <div class="field-block"><label class="field-label" for="loanAmount">贷款金额</label><input class="field-control" type="number" id="loanAmount" value="1000000" min="0" step="1000"></div>
+            <div class="field-row"><div class="field-block"><label class="field-label" for="loanRate">年利率 %</label><input class="field-control" type="number" id="loanRate" value="3.8" min="0" step="0.1"></div><div class="field-block"><label class="field-label" for="loanYears">年限</label><input class="field-control" type="number" id="loanYears" value="30" min="1" max="50"></div></div>
+            <button class="btn small primary" type="button" id="loanCalc">计算月供</button>
+          </div>
+          <div class="calc-result"><strong id="loanMonthly">—</strong><span>每月还款</span><div class="calc-lines" id="loanDetails"></div></div>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="bmi" hidden>
+        <div class="calc-grid">
+          <div class="calc-fields"><div class="field-row"><div class="field-block"><label class="field-label" for="bmiHeight">身高 cm</label><input class="field-control" type="number" id="bmiHeight" value="172"></div><div class="field-block"><label class="field-label" for="bmiWeight">体重 kg</label><input class="field-control" type="number" id="bmiWeight" value="65"></div></div><button class="btn small primary" type="button" id="bmiCalc">计算 BMI</button></div>
+          <div class="calc-result"><strong id="bmiValue">—</strong><span id="bmiLabel">等待计算</span><div class="calc-lines" id="bmiDetails"></div></div>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="tip" hidden>
+        <div class="calc-grid">
+          <div class="calc-fields"><div class="field-block"><label class="field-label" for="tipBill">账单金额</label><input class="field-control" type="number" id="tipBill" value="268"></div><div class="field-row"><div class="field-block"><label class="field-label" for="tipPercent">小费 %</label><input class="field-control" type="number" id="tipPercent" value="12"></div><div class="field-block"><label class="field-label" for="tipPeople">人数</label><input class="field-control" type="number" id="tipPeople" value="4" min="1"></div></div><button class="btn small primary" type="button" id="tipCalc">计算</button></div>
+          <div class="calc-result"><strong id="tipTotal">—</strong><span>总金额</span><div class="calc-lines" id="tipDetails"></div></div>
+        </div>
+      </section>
+      <section class="studio-pane" data-studio-pane="timezone" hidden>
+        <div class="timezone-controls">
+          <div class="field-block"><label class="field-label" for="zoneDateTime">当地时间</label><input class="field-control" type="datetime-local" id="zoneDateTime"></div>
+          <div class="field-block"><label class="field-label" for="zoneFrom">来源时区</label><select class="field-control" id="zoneFrom"></select></div>
+          <div class="field-block"><label class="field-label" for="zoneTo">目标时区</label><select class="field-control" id="zoneTo"></select></div>
+          <button class="btn small primary" type="button" id="zoneConvert">换算</button>
+        </div>
+        <div class="calc-result timezone-result"><strong id="zoneResult">—</strong><span id="zoneSummary"></span></div>
+      </section>
+      <section class="studio-pane" data-studio-pane="compound" hidden>
+        <div class="calc-grid">
+          <div class="calc-fields">
+            <div class="field-block"><label class="field-label" for="compoundPrincipal">初始本金</label><input class="field-control" type="number" id="compoundPrincipal" value="100000" min="0" step="1000"></div>
+            <div class="field-row"><div class="field-block"><label class="field-label" for="compoundRate">年化收益 %</label><input class="field-control" type="number" id="compoundRate" value="6" min="0" step="0.1"></div><div class="field-block"><label class="field-label" for="compoundYears">年限</label><input class="field-control" type="number" id="compoundYears" value="10" min="1" max="60"></div></div>
+            <div class="field-block"><label class="field-label" for="compoundMonthly">每月追加</label><input class="field-control" type="number" id="compoundMonthly" value="1000" min="0" step="100"></div>
+            <button class="btn small primary" type="button" id="compoundCalc">计算复利</button>
+          </div>
+          <div class="calc-result"><strong id="compoundTotal">—</strong><span>期末总额</span><div class="calc-lines" id="compoundDetails"></div></div>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <template id="tpl-crop">
+    <div class="tool-panel crop-panel">
+      <div class="crop-layout">
+        <section class="crop-preview-card">
+          <canvas id="cropCanvas" width="720" height="480" aria-label="图片裁剪预览"></canvas>
+          <div class="crop-empty" id="cropEmpty"><strong>选择一张图片</strong><small>拖动画面调整位置，用滑杆缩放</small></div>
+          <div class="crop-source-row">
+            <label class="btn small primary">选择图片<input id="cropFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label>
+            <span class="crop-source-info" id="cropSourceInfo">PNG / JPEG / WebP / SVG</span>
+          </div>
+        </section>
+        <section class="crop-controls">
+          <div class="field-block">
+            <span class="field-label">比例</span>
+            <div class="segmented" id="cropRatio" role="group" aria-label="裁剪比例">
+              <button class="is-active" type="button" data-crop-ratio="free">自由</button>
+              <button type="button" data-crop-ratio="1:1">1:1</button>
+              <button type="button" data-crop-ratio="4:3">4:3</button>
+              <button type="button" data-crop-ratio="16:9">16:9</button>
+            </div>
+          </div>
+          <label class="field-block"><span class="field-label">缩放 <span id="cropZoomValue">100%</span></span><input class="range" type="range" id="cropZoom" min="100" max="260" value="100"></label>
+          <label class="field-block"><span class="field-label">水平位置</span><input class="range" type="range" id="cropOffsetX" min="-100" max="100" value="0"></label>
+          <label class="field-block"><span class="field-label">垂直位置</span><input class="range" type="range" id="cropOffsetY" min="-100" max="100" value="0"></label>
+          <div class="crop-format-row">
+            <div class="field-block"><label class="field-label" for="cropFormat">格式</label><select class="field-control" id="cropFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WebP</option></select></div>
+            <div class="field-block" id="cropQualityBlock"><label class="field-label" for="cropQuality">质量 <span id="cropQualityValue">92%</span></label><input class="range" type="range" id="cropQuality" min="60" max="100" value="92"></div>
+          </div>
+          <div class="studio-actions">
+            <button class="btn small ghost" type="button" id="cropRotate"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>旋转 90°</button>
+            <button class="btn small ghost" type="button" id="cropReset">重置</button>
+            <button class="btn small primary" type="button" id="cropDownload" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载裁剪</button>
+            <span class="studio-status" id="cropStatus">等待图片</span>
+          </div>
+        </section>
+      </div>
+      <div class="tool-tip"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span>所有裁切、旋转与导出都在 Canvas 中完成，图片不上传</span></div>
+    </div>
+  </template>
+
+  <template id="tpl-regex">
+    <div class="tool-panel regex-panel">
+      <section class="regex-pattern-card">
+        <div class="regex-pattern-line">
+          <span class="regex-delimiter">/</span>
+          <input id="regexPattern" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="正则表达式" placeholder="输入正则表达式…">
+          <span class="regex-delimiter">/</span>
+          <div class="regex-flags" id="regexFlags" aria-label="正则选项">
+            <label class="regex-flag"><input type="checkbox" value="g" checked><span>g</span></label>
+            <label class="regex-flag"><input type="checkbox" value="i"><span>i</span></label>
+            <label class="regex-flag"><input type="checkbox" value="m"><span>m</span></label>
+            <label class="regex-flag"><input type="checkbox" value="s"><span>s</span></label>
+            <label class="regex-flag"><input type="checkbox" value="u"><span>u</span></label>
+          </div>
+        </div>
+        <div class="regex-status-row">
+          <span class="regex-status" id="regexStatus" data-state="idle" aria-live="polite"><span class="status-dot"></span><span id="regexStatusText">输入表达式和文本后实时匹配</span></span>
+          <span class="regex-time" id="regexTime"></span>
+        </div>
+      </section>
+      <div class="regex-grid">
+        <section class="regex-text-card">
+          <div class="mini-head"><span>测试文本</span><span class="mini-count" id="regexCharCount">0 字符</span></div>
+          <textarea id="regexText" spellcheck="false" aria-label="用于测试的文本" placeholder="粘贴要测试的文字…"></textarea>
+        </section>
+        <section class="regex-result-card">
+          <div class="mini-head">
+            <span>匹配结果</span>
+            <span class="regex-head-right">
+              <span class="mini-count" id="regexMatchCount">0 处</span>
+              <button class="chrome-action" type="button" id="regexCopy" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制匹配</span></button>
+            </span>
+          </div>
+          <div class="regex-highlight" id="regexHighlight" aria-live="polite"></div>
+          <div class="regex-matches" id="regexMatches"></div>
+          <div class="regex-replace">
+            <div class="mini-head"><span>替换预览</span><button class="chrome-action" type="button" id="regexReplaceCopy" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button></div>
+            <input class="field-control" id="regexReplacement" type="text" spellcheck="false" placeholder="替换为…，支持 $1 / $&amp;">
+            <pre class="regex-replace-output" id="regexReplaceOutput"></pre>
+          </div>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-hash">
+    <div class="tool-panel hash-panel">
+      <div class="hash-grid">
+        <section class="hash-input-card">
+          <div class="mini-head"><span>文本</span><span class="mini-count" id="hashByteCount">0 字节</span></div>
+          <textarea id="hashInput" spellcheck="false" aria-label="要计算摘要的文本" placeholder="输入要计算哈希的内容…"></textarea>
+          <div class="hash-hmac-field">
+            <label class="field-label" for="hashHmacKey">HMAC-SHA256 密钥</label>
+            <input id="hashHmacKey" type="text" spellcheck="false" autocomplete="off" placeholder="选填，填写后额外计算 HMAC">
+          </div>
+          <div class="hash-foot">
+            <span class="hash-status" id="hashStatus" data-state="idle"><span class="status-dot"></span><span id="hashStatusText">等待输入</span></span>
+            <label class="switch-row hash-option"><span><b>大写输出</b><small>A-F</small></span><span class="switch"><input type="checkbox" id="hashUppercase"><i></i></span></label>
+          </div>
+        </section>
+        <section class="hash-output-card">
+          <div class="mini-head"><span>摘要结果</span><button class="chrome-action" type="button" id="hashCopyAll" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制全部</span></button></div>
+          <div class="hash-results" id="hashResults"></div>
+          <div class="hash-row hash-hmac-row">
+            <div class="hash-row-head"><span class="hash-label">HMAC-SHA256</span><span class="hash-bits">KEY</span></div>
+            <code class="hash-value" id="hashHmacValue">—</code>
+            <button class="hash-copy" type="button" id="hashHmacCopy" disabled aria-label="复制 HMAC 摘要"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+          </div>
+          <p class="hash-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>本地 Web Crypto 计算 · SHA-1 仅用于兼容性校验，安全场景请使用 SHA-256 或更强摘要。</p>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-uuid">
+    <div class="tool-panel uuid-panel">
+      <div class="uuid-grid">
+        <section class="uuid-controls-card">
+          <div class="mini-head"><span>生成选项</span><span class="mini-count">CRYPTO RANDOM</span></div>
+          <div class="field-block">
+            <span class="field-label">格式</span>
+            <div class="segmented uuid-format" id="uuidFormat" role="group" aria-label="ID 格式">
+              <button class="is-active" type="button" data-uuid-format="uuid">UUID v4</button>
+              <button type="button" data-uuid-format="uuidv7">UUID v7</button>
+              <button type="button" data-uuid-format="short">短 ID</button>
+            </div>
+          </div>
+          <div class="field-row uuid-fields">
+            <div class="field-block">
+              <label class="field-label" for="uuidCount">数量</label>
+              <div class="select-wrap">
+                <select class="field-control" id="uuidCount">
+                  <option value="1">1 个</option>
+                  <option value="5" selected>5 个</option>
+                  <option value="10">10 个</option>
+                  <option value="20">20 个</option>
+                </select>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+            <div class="field-block">
+              <span class="field-label">&nbsp;</span>
+              <button class="btn primary uuid-generate" type="button" id="uuidGenerate"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>重新生成</button>
+            </div>
+          </div>
+          <label class="switch-row uuid-switch"><span><b>大写字母</b><small>HEX / BASE32</small></span><span class="switch"><input type="checkbox" id="uuidUpper"><i></i></span></label>
+          <label class="switch-row uuid-switch"><span><b>去掉连字符</b><small>仅 UUID v4</small></span><span class="switch"><input type="checkbox" id="uuidHyphens"><i></i></span></label>
+          <p class="uuid-note"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>使用加密级随机数，适合用作数据库主键、匿名标识或测试数据。</p>
+        </section>
+        <section class="uuid-results-card">
+          <div class="mini-head"><span>生成结果</span><button class="chrome-action" type="button" id="uuidCopyAll"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制全部</span></button></div>
+          <div class="uuid-list" id="uuidList" aria-live="polite"></div>
+          <p class="uuid-note">点击任意一行即可复制单个 ID。</p>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-datecalc">
+    <div class="tool-panel date-panel">
+      <div class="date-grid">
+        <section class="date-card">
+          <div class="mini-head"><span>日期间隔</span><span class="date-head-actions"><span class="date-tag">按自然日计算</span><button class="chrome-action" type="button" id="dateCopy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button></span></div>
+          <div class="date-fields">
+            <label class="date-field"><span>开始</span><input type="date" id="dateStart"></label>
+            <span class="date-arrow" aria-hidden="true">→</span>
+            <label class="date-field"><span>结束</span><input type="date" id="dateEnd"></label>
+          </div>
+          <div class="date-hero">
+            <strong id="dateTotalDays">—</strong>
+            <span>天</span>
+          </div>
+          <div class="date-breakdown" id="dateBreakdown">选择两个日期，查看相隔时间。</div>
+          <div class="date-weekdays" id="dateWeekdays"></div>
+          <label class="date-option"><input type="checkbox" id="dateBusiness"> 统计其间工作日</label>
+        </section>
+
+        <section class="date-card">
+          <div class="mini-head"><span>日期推算</span><span class="date-tag">自然日 / 月</span></div>
+          <div class="date-fields">
+            <label class="date-field date-base-field"><span>起始日期</span><input type="date" id="dateBase"></label>
+          </div>
+          <div class="date-operate">
+            <div class="segmented date-direction" id="dateDirection" role="group" aria-label="日期推算方向">
+              <button class="is-active" type="button" data-date-direction="add">之后</button>
+              <button type="button" data-date-direction="sub">之前</button>
+            </div>
+            <div class="date-amount">
+              <input type="number" id="dateAmount" min="0" max="99999" step="1" value="30" aria-label="推算数值">
+              <div class="select-wrap">
+                <select id="dateUnit" class="field-control" aria-label="推算单位">
+                  <option value="day" selected>天</option>
+                  <option value="week">周</option>
+                  <option value="month">个月</option>
+                  <option value="year">年</option>
+                </select>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="date-computed-block">
+            <span class="field-label">目标日期</span>
+            <strong id="dateComputed">—</strong>
+            <span id="dateComputedWeekday"></span>
+          </div>
+          <div class="date-quick">
+            <span>快速</span>
+            <button type="button" data-date-quick="7">+ 7 天</button>
+            <button type="button" data-date-quick="30">+ 30 天</button>
+            <button type="button" data-date-quick="90">+ 90 天</button>
+          </div>
+        </section>
+      </div>
+      <p class="date-note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>所有日期与时间换算都在本地完成；月份会按目标月份的有效日期自动调整。</p>
+    </div>
+  </template>
+
+  <template id="tpl-filekit">
+    <div class="tool-panel filekit-panel">
+      <div class="filekit-grid">
+        <section class="filekit-card">
+          <div class="mini-head"><span>文件</span><span class="mini-count" id="filekitStatus">等待文件</span></div>
+          <div class="filekit-drop" id="filekitDrop">
+            <input type="file" id="filekitInput" hidden>
+            <span class="filekit-drop-icon"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg></span>
+            <strong id="filekitDropTitle">拖入文件，或点击选择</strong>
+            <span id="filekitDropHint">任意格式 · 最大 25 MB · 不上传</span>
+            <button class="btn small primary" type="button" id="filekitChoose"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>选择文件</button>
+          </div>
+          <div class="filekit-file" id="filekitFile" hidden>
+            <span class="filekit-file-icon"><svg class="icon" aria-hidden="true"><use href="#i-file-text"/></svg></span>
+            <span class="filekit-file-copy"><strong id="filekitName">—</strong><span id="filekitMeta">—</span></span>
+            <span class="filekit-file-actions">
+              <button class="chrome-action" type="button" id="filekitChange"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>更换</span></button>
+              <button class="chrome-action" type="button" id="filekitRemove"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg><span>移除</span></button>
+            </span>
+          </div>
+          <div class="filekit-preview" id="filekitPreview" hidden><img id="filekitImage" alt="所选文件预览"></div>
+          <p class="filekit-note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>文件只在当前页面读取，不会上传到任何服务器。</p>
+          <div class="filekit-facts" aria-label="文件工坊能力">
+            <div><span>摘要</span><b>SHA-1 · 256 · 384 · 512</b></div>
+            <div><span>转换</span><b>Base64 编码 / 还原</b></div>
+            <div><span>存储</span><b>不写入本地存储</b></div>
+          </div>
+        </section>
+
+        <section class="filekit-card filekit-work">
+          <div class="filekit-work-head"><span class="field-label">处理方式</span><span class="filekit-work-hint">SHA · Base64 · 还原</span></div>
+          <div class="segmented filekit-modes" id="filekitModes" role="group" aria-label="文件处理方式">
+            <button class="is-active" type="button" data-filekit-mode="hash">SHA 校验</button>
+            <button type="button" data-filekit-mode="encode">Base64 编码</button>
+            <button type="button" data-filekit-mode="decode">Base64 还原</button>
+          </div>
+
+          <div class="filekit-pane" id="filekitHashPane">
+            <div class="filekit-hashes" id="filekitHashes"></div>
+            <div class="filekit-compare">
+              <div class="filekit-compare-line"><input id="filekitExpected" type="text" spellcheck="false" aria-label="要对比的摘要" placeholder="粘贴已有摘要，验证文件是否一致"><button class="btn small" type="button" id="filekitCompare">比对</button></div>
+              <p class="filekit-compare-state" id="filekitCompareState" aria-live="polite">支持任意一种 SHA 摘要</p>
+            </div>
+            <div class="filekit-actions">
+              <span class="filekit-hint" id="filekitHashHint">选择文件后自动计算摘要</span>
+              <button class="chrome-action" type="button" id="filekitCopyAll" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制全部</span></button>
+            </div>
+          </div>
+
+          <div class="filekit-pane" id="filekitEncodePane" hidden>
+            <div class="mini-head"><span>Base64 文本</span><span class="mini-count" id="filekitEncodeSize">0 B</span></div>
+            <textarea class="filekit-textarea" id="filekitBase64" readonly spellcheck="false" aria-label="文件 Base64 结果" placeholder="选择文件后在这里生成 Base64…"></textarea>
+            <div class="filekit-actions">
+              <span class="filekit-hint">可直接放进 JSON、CSS 或配置文件</span>
+              <span class="filekit-action-group">
+                <button class="chrome-action" type="button" id="filekitCopyBase64" disabled><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>复制</span></button>
+                <button class="chrome-action" type="button" id="filekitDownloadBase64" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>下载 .txt</span></button>
+              </span>
+            </div>
+          </div>
+
+          <div class="filekit-pane" id="filekitDecodePane" hidden>
+            <label class="field-label" for="filekitDecodeInput">粘贴 Base64 或 Data URL</label>
+            <textarea class="filekit-textarea" id="filekitDecodeInput" spellcheck="false" aria-label="粘贴 Base64 以还原文件" placeholder="data:image/png;base64,… 或直接粘贴 Base64 字符串"></textarea>
+            <div class="filekit-actions">
+              <span class="filekit-hint">还原不需要先选择文件</span>
+              <span class="filekit-action-group">
+                <button class="btn small" type="button" id="filekitDecode">解析</button>
+                <button class="chrome-action" type="button" id="filekitDecodeSave" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>下载文件</span></button>
+              </span>
+            </div>
+            <p class="filekit-decode-info" id="filekitDecodeInfo"></p>
+            <p class="inline-error" id="filekitDecodeError" hidden></p>
+          </div>
+        </section>
+      </div>
+      <div class="tool-tip"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span>SHA 摘要与 Base64 都在浏览器内计算；选择文件后不会产生网络请求。</span></div>
+    </div>
+  </template>
+
+  <!--
+    脚本按依赖顺序 defer 加载：
+    核心/数据/状态 → 界面 → 首页/路由/搜索/覆盖层 → 工具 → 动效 → 启动。
+    defer 保证脚本执行时 DOM 已解析，且顺序与文档顺序一致。
+  -->
+  <script src="assets/js/01-core.js" defer></script>
+  <script src="assets/js/02-data.js" defer></script>
+  <script src="assets/js/03-state.js" defer></script>
+  <script src="assets/js/04-feedback.js" defer></script>
+  <script src="assets/js/05-ui.js" defer></script>
+  <script src="assets/js/06-home.js" defer></script>
+  <script src="assets/js/07-routing.js" defer></script>
+  <script src="assets/js/08-palette.js" defer></script>
+  <script src="assets/js/09-overlays.js" defer></script>
+  <script src="assets/js/10-bindings.js" defer></script>
+  <script src="assets/js/tools/csv.js" defer></script>
+  <script src="assets/js/tools/diff.js" defer></script>
+  <script src="assets/js/tools/jwt.js" defer></script>
+  <script src="assets/js/tools/imagepalette.js" defer></script>
+  <script src="assets/js/tools/cron.js" defer></script>
+  <script src="assets/js/tool-router.js" defer></script>
+  <script src="assets/js/boot.js" defer></script>
+  <script src="assets/js/tools/shared.js" defer></script>
+  <script src="assets/js/tools/json.js" defer></script>
+  <script src="assets/js/tools/qr.js" defer></script>
+  <script src="assets/js/tools/color.js" defer></script>
+  <script src="assets/js/tools/password.js" defer></script>
+  <script src="assets/js/tools/unit.js" defer></script>
+  <script src="assets/js/tools/unit-advanced.js" defer></script>
+  <script src="assets/js/tools/timestamp.js" defer></script>
+  <script src="assets/js/tools/image.js" defer></script>
+  <script src="assets/js/tools/text.js" defer></script>
+  <script src="assets/js/tools/encode.js" defer></script>
+  <script src="assets/js/tools/random.js" defer></script>
+  <script src="assets/js/tools/url.js" defer></script>
+  <script src="assets/js/tools/extract.js" defer></script>
+  <script src="assets/js/tools/sites.js" defer></script>
+  <script src="assets/js/tools/markdown.js" defer></script>
+  <script src="assets/js/tools/regex.js" defer></script>
+  <script src="assets/js/tools/hash.js" defer></script>
+  <script src="assets/js/tools/uuid.js" defer></script>
+  <script src="assets/js/tools/date.js" defer></script>
+  <script src="assets/js/tools/webstudio.js" defer></script>
+  <script src="assets/js/tools/media.js" defer></script>
+  <script src="assets/js/tools/data.js" defer></script>
+  <script src="assets/js/tools/filekit.js" defer></script>
+  <script src="assets/js/tools/favicon.js" defer></script>
+  <script src="assets/js/tools/life.js" defer></script>
+  <script src="assets/js/tools/crop.js" defer></script>
+  <script src="assets/js/motion.js" defer></script>
+  <script src="assets/js/start.js" defer></script>
+</body>
+</html>

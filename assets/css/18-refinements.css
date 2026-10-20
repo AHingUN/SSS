@@ -1,0 +1,806 @@
+/* ==========================================================================
+   Refinements: search edges, focus freedom, author identity and readability
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Search palette: a proper inset footer and unbroken rounded edges
+   -------------------------------------------------------------------------- */
+.palette-surface {
+  display: flex;
+  max-height: min(84vh, 760px);
+  flex-direction: column;
+  padding: 6px;
+  border-radius: 28px;
+}
+
+/* The native dialog is a square scroll container. Clip it to the same
+   squircle as the surface so no square scrollbar corner can leak out. */
+.palette-dialog,
+.about-dialog {
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(253, 252, 249, 0.84), rgba(247, 245, 241, 0.76));
+  box-shadow: 0 60px 120px -42px rgba(36, 29, 58, 0.58);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+}
+
+[data-theme="dark"] .palette-dialog,
+[data-theme="dark"] .about-dialog {
+  background:
+    linear-gradient(145deg, rgba(38, 39, 52, 0.9), rgba(19, 20, 28, 0.84));
+}
+
+.about-dialog {
+  border-radius: 30px;
+}
+
+.palette-surface,
+.about-surface {
+  box-shadow: inset 0 1px 0 var(--glass-highlight) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.palette-search {
+  flex: 0 0 auto;
+  margin: 0 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+[data-theme="dark"] .palette-search {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.palette-results {
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 4px 4px 12px;
+  border-radius: 18px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent);
+}
+
+.palette-results::-webkit-scrollbar {
+  width: 7px;
+}
+
+.palette-results::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(80, 75, 100, 0.24);
+  background-clip: content-box;
+}
+
+.palette-footer {
+  display: flex;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 0 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+[data-theme="dark"] .palette-footer {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.palette-item {
+  border-radius: 13px;
+}
+
+.palette-shortcut-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 4px 2px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+[data-theme="dark"] .palette-shortcut-hint {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.palette-group-label {
+  padding: 11px 12px 7px;
+}
+
+@media (max-width: 760px) {
+  .palette-dialog {
+    margin-top: max(6vh, 16px);
+  }
+
+  .palette-surface {
+    max-height: calc(100dvh - 90px);
+    padding: 5px;
+    border-radius: 24px;
+  }
+
+  .palette-search {
+    height: 58px;
+    margin-bottom: 5px;
+    border-radius: 18px;
+  }
+
+  .palette-results {
+    max-height: none;
+    padding-bottom: 9px;
+  }
+
+  .palette-footer {
+    display: flex;
+    min-height: 38px;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 15px;
+  }
+
+  .palette-footer .palette-fuzzy-hint,
+  .palette-footer .palette-footer-brand {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Focus clock: more display freedom while keeping only the time on screen
+   -------------------------------------------------------------------------- */
+.clock-screen.is-focus .clock-main {
+  transform: translateY(var(--focus-offset, 0vh));
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clock-screen.is-focus .clock-digital {
+  width: 100%;
+}
+
+.clock-screen.is-focus .clock-big {
+  font-size: min(calc(clamp(88px, 24vw, 340px) * var(--focus-scale, 1)), 31vw);
+  letter-spacing: var(--focus-tracking, -0.06em) !important;
+}
+
+.clock-screen.is-focus.is-panel-open .clock-main {
+  transform: translateY(calc(-24vh + var(--focus-offset, 0vh)));
+}
+
+.clock-screen.is-focus[data-focus-align="left"] .clock-digital {
+  text-align: left;
+}
+
+.clock-screen.is-focus[data-focus-align="left"] .clock-big {
+  justify-content: flex-start;
+}
+
+.clock-screen.is-focus[data-focus-align="right"] .clock-digital {
+  text-align: right;
+}
+
+.clock-screen.is-focus[data-focus-align="right"] .clock-big {
+  justify-content: flex-end;
+}
+
+.clock-screen.is-focus[data-focus-align="center"] .clock-digital {
+  text-align: center;
+}
+
+.clock-screen.is-focus[data-focus-align="center"] .clock-big {
+  justify-content: center;
+}
+
+.clock-screen.is-focus.focus-glow .clock-big {
+  text-shadow:
+    0 0 26px color-mix(in srgb, var(--focus-accent) 46%, transparent),
+    0 0 92px color-mix(in srgb, var(--focus-accent) 22%, transparent);
+}
+
+.clock-screen.is-focus.focus-glow .clock-big-seconds {
+  text-shadow: 0 0 22px color-mix(in srgb, var(--focus-accent) 46%, transparent);
+}
+
+/* User-selected atmosphere, overriding the automatic daypart safely. */
+.clock-screen.is-focus[data-focus-atmosphere="dawn"] {
+  --focus-accent: #ffc38f;
+  background:
+    radial-gradient(54% 50% at 50% 44%, rgba(255, 167, 122, 0.2), transparent 70%),
+    radial-gradient(40% 40% at 80% 18%, rgba(139, 140, 255, 0.14), transparent 72%),
+    #0b0911;
+}
+
+.clock-screen.is-focus[data-focus-atmosphere="day"] {
+  --focus-accent: #9ee4ff;
+  background:
+    radial-gradient(54% 50% at 50% 44%, rgba(89, 179, 255, 0.2), transparent 70%),
+    radial-gradient(40% 40% at 80% 18%, rgba(145, 121, 255, 0.12), transparent 72%),
+    #06101a;
+}
+
+.clock-screen.is-focus[data-focus-atmosphere="dusk"] {
+  --focus-accent: #ffad86;
+  background:
+    radial-gradient(54% 50% at 50% 44%, rgba(255, 126, 104, 0.2), transparent 70%),
+    radial-gradient(40% 40% at 80% 18%, rgba(137, 106, 255, 0.16), transparent 72%),
+    #0c0812;
+}
+
+.clock-screen.is-focus[data-focus-atmosphere="night"] {
+  --focus-accent: #8ea6ff;
+  background:
+    radial-gradient(54% 50% at 50% 44%, rgba(99, 119, 255, 0.21), transparent 70%),
+    radial-gradient(40% 40% at 82% 18%, rgba(139, 109, 255, 0.12), transparent 72%),
+    #04060c;
+}
+
+.clock-screen.is-focus[data-focus-atmosphere="clear"] {
+  --focus-accent: #f3eee4;
+  background:
+    radial-gradient(50% 46% at 50% 44%, rgba(255, 255, 255, 0.055), transparent 72%),
+    #08090d;
+}
+
+@media (max-width: 760px) {
+  .clock-screen.is-focus.is-panel-open .clock-main {
+    transform: translateY(calc(-20vh + var(--focus-offset, 0vh)));
+  }
+}
+
+/* More usable focus controls inside the now-taller panel. */
+.clock-focus-panel {
+  max-height: min(82vh, 700px);
+  border-radius: 25px;
+}
+
+.clock-focus-panel-head {
+  align-items: center;
+}
+
+.clock-focus-eyebrow {
+  font-size: 11px;
+}
+
+.clock-focus-preview {
+  color: var(--focus-accent);
+  font-family: var(--font-mono);
+  font-size: clamp(18px, 2vw, 24px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .clock-focus-panel {
+    max-height: 78vh;
+    padding: 16px 14px 13px;
+  }
+
+  .clock-focus-style {
+    min-height: 48px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 7px 9px;
+  }
+
+  .clock-focus-preview {
+    font-size: 20px;
+  }
+}
+
+.clock-focus-group-label {
+  font-size: 11.5px;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 1px;
+}
+
+.clock-focus-group {
+  grid-template-columns: 82px minmax(0, 1fr);
+}
+
+.clock-focus-group-label output {
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.clock-focus-option {
+  font-size: 11.5px;
+}
+
+.clock-focus-style {
+  font-size: 11.5px;
+}
+
+.clock-focus-reset {
+  font-size: 11.5px;
+}
+
+.clock-focus-done {
+  font-size: 12px;
+}
+
+.clock-focus-styles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .clock-focus-panel {
+    max-height: 78vh;
+    padding: 16px 14px 13px;
+  }
+
+  .clock-focus-group {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Author: replace the letter with a replaceable portrait, add contact card
+   -------------------------------------------------------------------------- */
+.author-portrait-panel {
+  isolation: isolate;
+}
+
+.author-avatar {
+  position: absolute;
+  top: 11%;
+  left: 14%;
+  z-index: 1;
+  width: 72%;
+  height: 76%;
+  object-fit: cover;
+  object-position: center 24%;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 44% 44% 35% 35% / 38% 38% 32% 32%;
+  box-shadow:
+    0 24px 55px -28px rgba(28, 18, 53, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  filter: saturate(0.92) contrast(1.02);
+}
+
+.author-portrait-panel::after {
+  z-index: 2;
+  opacity: 0.75;
+}
+
+.author-portrait-caption {
+  z-index: 3;
+  font-size: 10px;
+}
+
+.author-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 330px);
+  align-items: end;
+  gap: clamp(30px, 6vw, 78px);
+}
+
+.author-note blockquote {
+  max-width: none;
+}
+
+.author-contact {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 20px 50px -36px rgba(20, 12, 40, 0.5);
+}
+
+.author-contact-kicker {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+.author-contact-mail {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.author-contact-mail:hover {
+  color: var(--accent);
+}
+
+.author-contact-list {
+  display: grid;
+  gap: 8px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.author-contact-list div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.author-contact-list span {
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+}
+
+.author-contact-list b {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.author-contact p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .author-note {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .author-contact {
+    max-width: 430px;
+  }
+}
+
+@media (max-width: 760px) {
+  .author-avatar {
+    top: 10%;
+    left: 13%;
+    width: 74%;
+    height: 74%;
+  }
+
+  .author-contact {
+    max-width: none;
+    padding: 16px;
+    border-radius: 19px;
+  }
+}
+
+/* Author page: reveal from the triggering control and exit back into it. */
+.author-dialog {
+  --author-x: 50vw;
+  --author-y: 50vh;
+}
+
+.author-screen {
+  animation: none;
+}
+
+.author-dialog.is-opening .author-screen {
+  animation: authorReveal 0.66s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.author-dialog.is-opening .author-hero-copy {
+  animation: authorRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.author-dialog.is-opening .author-portrait-panel {
+  animation: authorPortraitRise 0.56s cubic-bezier(0.16, 1, 0.3, 1) 0.17s both;
+}
+
+.author-dialog.is-opening .author-principles article:nth-child(1) {
+  animation: authorRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.23s both;
+}
+
+.author-dialog.is-opening .author-principles article:nth-child(2) {
+  animation: authorRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.29s both;
+}
+
+.author-dialog.is-opening .author-principles article:nth-child(3) {
+  animation: authorRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
+.author-dialog.is-opening .author-note {
+  animation: authorRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.38s both;
+}
+
+.author-dialog.is-closing::backdrop {
+  animation-duration: 0.3s;
+}
+
+.author-dialog.is-closing .author-screen {
+  animation: authorExit 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.author-dialog.is-closing .author-hero-copy,
+.author-dialog.is-closing .author-principles article,
+.author-dialog.is-closing .author-note {
+  animation: authorLeave 0.24s ease-in both;
+}
+
+.author-dialog.is-closing .author-portrait-panel {
+  animation: authorPortraitLeave 0.24s ease-in both;
+}
+
+@keyframes authorReveal {
+  from {
+    opacity: 0;
+    clip-path: circle(0 at var(--author-x) var(--author-y));
+    transform: scale(0.994);
+  }
+  to {
+    opacity: 1;
+    clip-path: circle(150vmax at var(--author-x) var(--author-y));
+    transform: scale(1);
+  }
+}
+
+@keyframes authorExit {
+  to {
+    opacity: 0;
+    clip-path: circle(0 at var(--author-x) var(--author-y));
+    transform: scale(0.992);
+  }
+}
+
+@keyframes authorLeave {
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes authorPortraitLeave {
+  from {
+    opacity: 1;
+    transform: translateY(0) rotate(2deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) rotate(2deg) scale(0.98);
+  }
+}
+
+@keyframes authorRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes authorPortraitRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotate(2deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(2deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .author-dialog.is-opening .author-screen,
+  .author-dialog.is-opening .author-hero-copy,
+  .author-dialog.is-opening .author-portrait-panel,
+  .author-dialog.is-opening .author-principles article,
+  .author-dialog.is-opening .author-note,
+  .author-dialog.is-closing .author-screen {
+    animation: none !important;
+    clip-path: none !important;
+    transform: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Readability floor: small metadata, hints and labels become legible
+   -------------------------------------------------------------------------- */
+.kbd,
+kbd {
+  font-size: 10.5px !important;
+}
+
+.brand-tag {
+  font-size: 9.5px !important;
+}
+
+small,
+.switch-row small,
+.random-list-foot .switch-row small {
+  font-size: 11px !important;
+  line-height: 1.5;
+}
+
+[class*="-hint"],
+[class*="-note"],
+[class*="-meta"],
+[class*="-caption"],
+[class*="-kicker"],
+[class*="-label"],
+[class*="-count"],
+[class*="-index"],
+[class*="-tag"],
+[class*="-badge"] {
+  font-size: 11px !important;
+}
+
+.author-tags span {
+  font-size: 10.5px !important;
+}
+
+[class*="-category"] {
+  font-size: 11px !important;
+}
+
+.site-category,
+.card-new,
+.url-scheme-pill,
+.photo-size,
+.shade-swatch {
+  font-size: 10.5px !important;
+}
+
+.dock-item {
+  font-size: 11px !important;
+}
+
+.footer-links button,
+.footer-meta,
+.author-footer,
+.palette-footer {
+  font-size: 11px !important;
+}
+
+.tool-kicker,
+.local-inline,
+.tool-foot,
+.tool-foot button,
+.code-file,
+.status-pill,
+.inline-error,
+.code-stats,
+.tool-tip,
+.qr-caption,
+.qr-file-size,
+.qr-error,
+.color-preview-head,
+.slider-label span,
+.value-row > span,
+.palette-heading,
+.password-meta,
+.range-ends,
+.common-chip,
+.epoch-line > span,
+.timezone-label,
+.mini-link,
+.result-row,
+.result-row code,
+.dropzone-foot,
+.preview-badge,
+.image-file-meta,
+.input-suffix span,
+.compression-result .field-label,
+.saving-pill,
+.image-note,
+.stat span,
+.tool-action,
+.frequency-row,
+.frequency-count,
+.frequency-empty,
+.encode-error,
+.encode-hint,
+.stage-label,
+.stage-note {
+  font-size: 11px !important;
+}
+
+.eyebrow,
+.object-caption,
+.object-badge small,
+.chip-caption span,
+.chip-caption small,
+.chip-date,
+.chip-live,
+.hero-meta,
+.fact span,
+.recent-label,
+.recent-chip,
+.open-label,
+.qr-empty,
+.qr-caption,
+.qr-file-size,
+.site-desc,
+.site-host,
+.extract-item-domain,
+.extract-item-link,
+.sites-meta,
+.sites-note,
+.url-origin-row,
+.url-part,
+.url-preview,
+.url-local-note,
+.regex-match-value,
+.regex-status,
+.regex-time,
+.md-page-badge,
+.md-note,
+.md-live {
+  font-size: 11px !important;
+}
+
+.site-desc,
+.extract-item-link {
+  font-size: 11.5px !important;
+}
+
+.code-area,
+.code-output,
+#extractInput,
+#regexText {
+  font-size: 12px !important;
+}
+
+.author-lead {
+  font-size: 13.5px !important;
+}
+
+@media (max-width: 760px) {
+  .author-lead {
+    font-size: 13px !important;
+  }
+
+  .footer-links button,
+  .footer-meta {
+    font-size: 11.5px !important;
+  }
+
+  .clock-focus-styles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clock-focus-group-format .clock-focus-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clock-focus-group-format .clock-focus-option {
+    width: 100%;
+  }
+
+  .clock-focus-group {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+}

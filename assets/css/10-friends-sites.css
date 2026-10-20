@@ -1,0 +1,495 @@
+/* Friends, site groups and theme reveal */
+/* ==========================================================================
+   Friend links
+   ========================================================================== */
+.friends-section {
+  margin: 18px 0 42px;
+}
+
+.friends-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 4px 14px;
+}
+
+.friends-head .section-kicker {
+  margin-bottom: 3px;
+}
+
+.friends-head h2 {
+  margin: 2px 0 5px;
+  color: var(--text);
+  font-size: clamp(24px, 3vw, 31px);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.friends-head p {
+  max-width: 480px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.friends-note {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 4px;
+  color: var(--text-tertiary);
+  font-size: 8.5px;
+}
+
+.friends-note .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.friends-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.friend-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--glass-bg);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  transition:
+    transform 0.26s var(--ease-spring),
+    border-color 0.24s ease,
+    background-color 0.24s ease,
+    box-shadow 0.24s ease;
+}
+
+.friend-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--field-border-strong);
+  background: var(--surface-strong);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 13px 25px -20px rgba(var(--shadow-rgb), 0.3);
+}
+
+.friend-mark {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+}
+
+.friend-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.friend-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.friend-title strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-tag {
+  flex: 0 0 auto;
+  padding: 1px 4px;
+  border: 1px solid var(--field-border);
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  letter-spacing: 0.02em;
+}
+
+.friend-copy small {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 8.5px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-arrow {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--field-border);
+  border-radius: 50%;
+  color: var(--text-tertiary);
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    transform 0.22s var(--ease-spring);
+}
+
+.friend-arrow .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.friend-card:hover .friend-arrow {
+  transform: rotate(6deg);
+  border-color: transparent;
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ==========================================================================
+   Site directory: category groups
+   ========================================================================== */
+.sites-filter-block {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sites-filter-label {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sites-filters {
+  justify-content: flex-end;
+}
+
+.site-filter-count {
+  margin-left: 3px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  opacity: 0.68;
+}
+
+.sites-filters .filter-pill.is-active .site-filter-count {
+  color: inherit;
+  opacity: 0.68;
+}
+
+.sites-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.site-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 3px;
+}
+
+.site-group-title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.site-group-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.site-group-title h3 {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 640;
+  letter-spacing: 0.01em;
+}
+
+.site-group-title p {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 8.5px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-group-count {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+}
+
+.site-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 980px) {
+  .friends-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sites-filter-block {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .sites-filter-block .sites-filters {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 760px) {
+  .friends-section {
+    margin: 4px 0 30px;
+  }
+
+  .friends-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 11px;
+  }
+
+  .friends-head h2 {
+    font-size: 24px;
+  }
+
+  .friends-note {
+    padding-bottom: 0;
+  }
+
+  .friends-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .friend-card {
+    padding: 11px 12px;
+  }
+
+  .site-group-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .sites-grid {
+    gap: 16px;
+  }
+
+  .site-group-title p {
+    flex-basis: 100%;
+    padding-left: 12px;
+    white-space: normal;
+  }
+
+  .sites-filter-block {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .sites-filter-label {
+    padding-left: 2px;
+  }
+
+  .sites-filter-block .sites-filters {
+    flex-wrap: wrap;
+    overflow: visible;
+    border-radius: 16px;
+    gap: 1px;
+  }
+
+  .sites-filter-block .filter-pill {
+    height: 30px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .sites-filter-block .site-filter-count {
+    margin-left: 2px;
+    font-size: 6.5px;
+  }
+}
+
+@media (max-width: 520px) {
+  .friend-title strong {
+    font-size: 10.5px;
+  }
+
+  .friend-copy small {
+    font-size: 8px;
+  }
+
+  .friend-arrow {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+/* ==========================================================================
+   Theme reveal & scroll-linked tool cards
+   ========================================================================== */
+@supports (view-transition-name: none) {
+  ::view-transition-group(root) {
+    animation: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+    animation: none;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+    clip-path: circle(0px at var(--theme-x, 82%) var(--theme-y, 8%));
+    animation: themeCircleReveal 0.52s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+}
+
+@keyframes themeCircleReveal {
+  to {
+    clip-path: circle(
+      var(--theme-radius, 150vmax) at var(--theme-x, 82%) var(--theme-y, 8%)
+    );
+  }
+}
+
+.theme-toggle {
+  position: relative;
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle .icon-moon {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: auto;
+  transform-origin: 50% 50%;
+  transition:
+    opacity 0.4s ease,
+    transform 0.52s var(--ease-spring);
+}
+
+.theme-toggle .icon-sun {
+  opacity: 0;
+  transform: rotate(-55deg) scale(0.68);
+}
+
+.theme-toggle .icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-toggle .icon-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-toggle .icon-moon {
+  opacity: 0;
+  transform: rotate(55deg) scale(0.68);
+}
+
+@keyframes cardScrollFlow {
+  0% {
+    opacity: 0.12;
+    translate: 0 32px;
+  }
+  23% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  80% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  100% {
+    opacity: 0.12;
+    translate: 0 -22px;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .tool-grid .tool-card {
+      animation: cardScrollFlow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+  }
+}
+
+/* Keep the ambient decor and horizontal filter strips from widening the page
+   on very narrow screens. `clip` avoids creating a new scroll container. */
+html,
+body {
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle .icon-sun,
+  .theme-toggle .icon-moon {
+    transition: none;
+  }
+}
+
